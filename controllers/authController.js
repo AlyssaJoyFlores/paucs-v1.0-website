@@ -86,7 +86,7 @@ const register = async (req, res) => {
     }
 
     // const origin = 'http://localhost:3000'
-    const origin = 'https://paucs.store/'
+    const origin = 'https://paucs.store'
 
 
     //after creating the user now it will validate/confirm email
@@ -276,7 +276,8 @@ const forgotPassword = async(req, res) => {
         // send email  [miliseconds/seconds/minutes]
 
         // const origin = 'http://localhost:3000'
-        const origin = 'https://paucs.store/'
+        const origin = 'https://paucs.store';
+        
         await sendResetPasswordEmail({
             name:user.full_name, 
             school_email:user.school_email, 
