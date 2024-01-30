@@ -132,7 +132,7 @@ server.use(morgan(morganFormat));
 server.use(mongoSanitize())
 
 const corsOptions = {
-    origin: 'https://paucs.store/',
+    origin: 'https://paucs.store',
     credentials: true,
     //https://paucs-v1.onrender.com
 };
