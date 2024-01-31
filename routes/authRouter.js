@@ -3,6 +3,16 @@ const router = express.Router()
 
 const {authenticateUser} = require('../middleware/authentication')
 
+const rateLimiter = require('express-rate-limit')
+const apiLimiter = rateLimiter({
+    windowMs: 15 * 60 * 1000, //min minutes
+    max: 5,
+    message: {
+        msg: 'Too many request. Please Try again later'
+    }
+})
+
+
 const {
     register,
     verifyEmail,
@@ -17,7 +27,7 @@ const {
 } = require('../controllers/authController')
 
 router.route('/register').post(register)
-router.route('/loginStudent').post(loginStudent)
+router.route('/loginStudent').post(apiLimiter, loginStudent)
 router.route('/loginAdmin').post(loginAdmin)
 router.route('/logout').delete(authenticateUser, logout)
 router.route('/verify-email').post(verifyEmail)
