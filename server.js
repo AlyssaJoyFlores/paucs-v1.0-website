@@ -142,7 +142,7 @@ server.use(
         fontSrc: ["'self'", "https://fonts.googleapis.com"], 
         objectSrc: ["'none'"], 
         frameAncestors: ["'self'", "https://paucs.store"], 
-        connectSrc: ["'self'", "https://paucs.store", "https://res.cloudinary.com", "https://ui-avatars.com/api/", "https://www.google.com"], 
+        connectSrc: ["'self'", "https://paucs.store", "https://res.cloudinary.com", "https://ui-avatars.com/api/", "https://www.google.com", "https://www.google.com/recaptcha"], 
         mediaSrc: ["'self'", "https://paucs.store"], 
         formAction: ["'self'", "https://paucs.store"], 
         requireTrustedTypesFor: 'script'
