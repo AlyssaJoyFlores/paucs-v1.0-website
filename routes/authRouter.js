@@ -5,7 +5,7 @@ const {authenticateUser} = require('../middleware/authentication')
 
 const rateLimiter = require('express-rate-limit')
 const apiLimiter = rateLimiter({
-    windowMs: 15 * 60 * 1000, //min minutes
+    windowMs: 1 * 60 * 1000, //1 min
     max: 5,
     message: {
         msg: 'Too many request. Please Try again later'

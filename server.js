@@ -18,6 +18,7 @@ const User = require('./models/usersModel')
 
 
 
+
 // invoke
 const server = express();
 const serverIO = http.createServer(server)
@@ -115,7 +116,7 @@ server.use(morgan(morganFormat));
 
 
 
-//FOR CSP
+// //FOR CSP
 // server.use(
 //   helmet.contentSecurityPolicy({
 //     useDefaults: true,
@@ -128,12 +129,13 @@ server.use(morgan(morganFormat));
 //   })
 // );
 
+//===========
 
 server.use(
     helmet.contentSecurityPolicy({
       directives: {
         defaultSrc: ["'self'"],
-        scriptSrc: ['strict-dynamic', 'nonce-random', 'unsafe-inline', 'http:', 'https:'],
+        scriptSrc: ['strict-dynamic', 'nonce-rAnd0m', 'unsafe-inline', 'http:', 'https:'],
         styleSrc: ["'self'", "https://fonts.googleapis.com"],
         imgSrc: ["'self'", "https://paucs.store", "https://res.cloudinary.com", "https://ui-avatars.com/api/"],
         fontSrc: ["'self'", "https://fonts.gstatic.com"], 
@@ -147,10 +149,12 @@ server.use(
     })
   );
 
+
 server.use(mongoSanitize())
 
 const corsOptions = {
     origin: 'https://paucs.store',
+    // origin: 'http://localhost:3000',
     credentials: true,
     //https://paucs-v1.onrender.com
 };
@@ -174,8 +178,6 @@ server.use(express.static(path.join(__dirname, 'dist')));
 //   next(); 
     
 // });
-
-
 
 
 // api routes

@@ -2,6 +2,8 @@ const User = require('../models/usersModel')
 const Token = require('../models/tokenModel')
 const CustomError = require('../errors')
 const crypto = require('crypto')
+const axios = require('axios');
+require('dotenv').config();
 const {StatusCodes} = require('http-status-codes')
 const { attachedCookiesToResponse, createTokenUser, sendVerificationEmail, sendResetPasswordEmail, createHash} = require('../utils')
 
@@ -136,7 +138,27 @@ const loginAdmin = async (req, res) => {
 
 
 const login = async (req, res, role) => {
-    const { school_email, password } = req.body;
+    const { school_email, password, recaptchaToken } = req.body;
+
+      // Verify reCAPTCHA token
+    const secretKey = process.env.CAPTCHA_KEY; // Replace with your reCAPTCHA secret key
+
+    if (!secretKey) {
+        throw new CustomError.BadRequestError('reCAPTCHA secret key is missing or invalid');
+    }
+
+    if (!recaptchaToken) {
+        throw new CustomError.BadRequestError('reCAPTCHA secret key is missing or invalid');
+    }
+  
+    const recaptchaResponse = await axios.post( `https://www.google.com/recaptcha/api/siteverify?secret=${secretKey}&response=${recaptchaToken}`)
+
+    if (!recaptchaResponse.data.success) {
+        const errorDetails = JSON.stringify(recaptchaResponse.data);
+        throw new CustomError.BadRequestError('reCAPTCHA verification failed')
+    }
+    
+    console.log('reCAPTCHA Response:', recaptchaResponse.data);
 
     // check if email and password exist in db
     if (!school_email || !password) {
@@ -276,8 +298,7 @@ const forgotPassword = async(req, res) => {
         // send email  [miliseconds/seconds/minutes]
 
         // const origin = 'http://localhost:3000'
-        const origin = 'https://paucs.store';
-        
+        const origin = 'https://paucs.store'
         await sendResetPasswordEmail({
             name:user.full_name, 
             school_email:user.school_email, 
