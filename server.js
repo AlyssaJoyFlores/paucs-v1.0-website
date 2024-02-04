@@ -131,6 +131,7 @@ server.use(morgan(morganFormat));
 
 //===========
 
+Jerome Gaspar
 server.use(
     helmet.contentSecurityPolicy({
       directives: {
@@ -138,13 +139,13 @@ server.use(
         scriptSrc: ['strict-dynamic', 'nonce-rAnd0m', 'unsafe-inline', 'http:', 'https:'],
         styleSrc: ["'self'", "https://fonts.googleapis.com"],
         imgSrc: ["'self'", "https://paucs.store", "https://res.cloudinary.com", "https://ui-avatars.com/api/"],
-        fontSrc: ["'self'", "https://fonts.gstatic.com"], 
+        fontSrc: ["'self'", "https://fonts.googleapis.com"], 
         objectSrc: ["'none'"], 
         frameAncestors: ["'self'", "https://paucs.store"], 
         connectSrc: ["'self'", "https://paucs.store", "https://res.cloudinary.com", "https://ui-avatars.com/api/", "https://www.google.com"], 
         mediaSrc: ["'self'", "https://paucs.store"], 
         formAction: ["'self'", "https://paucs.store"], 
-        requireTrustedTypesFor: ['script'] 
+        requireTrustedTypesFor: 'script'
       },
     })
   );
