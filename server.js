@@ -132,23 +132,25 @@ server.use(morgan(morganFormat));
 //===========
 
 
+
+
 server.use(
     helmet.contentSecurityPolicy({
       directives: {
         defaultSrc: ["'self'"],
-        scriptSrc: ['strict-dynamic', 'nonce-rAnd0m', 'unsafe-inline', 'http:', 'https:'],
-        styleSrc: ["'self'", "https://fonts.googleapis.com"],
-        imgSrc: ["'self'", "https://paucs.store", "https://res.cloudinary.com", "https://ui-avatars.com/api/"],
+        scriptSrc: ['strict-dynamic', 'nonce-rAnd0m', 'http:', 'https:'],
+        styleSrc: ["'self'", "https://fonts.googleapis.com", "'unsafe-inline'"], // Added 'unsafe-inline'
+        imgSrc: ["'self'", "https://paucs.store", "https://res.cloudinary.com", "https://ui-avatars.com/api"],
         fontSrc: ["'self'", "https://fonts.googleapis.com"], 
         objectSrc: ["'none'"], 
         frameAncestors: ["'self'", "https://paucs.store"], 
-        connectSrc: ["'self'", "https://paucs.store", "https://res.cloudinary.com", "https://ui-avatars.com/api/", "https://www.google.com", "https://www.google.com/recaptcha"], 
+        connectSrc: ["'self'", "https://paucs.store", "https://res.cloudinary.com", "https://ui-avatars.com/api", "https://www.google.com", "https://www.google.com/recaptcha/api/siteverify"], 
         mediaSrc: ["'self'", "https://paucs.store"], 
         formAction: ["'self'", "https://paucs.store"], 
-        requireTrustedTypesFor: 'script'
+        requireTrustedTypesFor: ['script']
       },
     })
-  );
+);
 
 
 server.use(mongoSanitize())
