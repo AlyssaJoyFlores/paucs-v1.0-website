@@ -131,7 +131,7 @@ server.use(morgan(morganFormat));
 
 //===========
 
-Jerome Gaspar
+
 server.use(
     helmet.contentSecurityPolicy({
       directives: {
