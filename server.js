@@ -128,19 +128,21 @@ server.use(morgan(morganFormat));
 //   })
 // );
 
+
 server.use(
     helmet.contentSecurityPolicy({
       directives: {
         defaultSrc: ["'self'"],
-        scriptSrc: ["'self'"],
-        styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
-        imgSrc: ["'self'", "https://paucs.store" , "https://res.cloudinary.com" , "https://ui-avatars.com/api/"],
+        scriptSrc: ['strict-dynamic', 'nonce-rAnd0m123', 'unsafe-inline', 'http:', 'https:'],
+        styleSrc: ["'self'", "https://fonts.googleapis.com"],
+        imgSrc: ["'self'", "https://paucs.store", "https://res.cloudinary.com", "https://ui-avatars.com/api/"],
         fontSrc: ["'self'", "https://fonts.gstatic.com"], 
         objectSrc: ["'none'"], 
         frameAncestors: ["'self'", "https://paucs.store"], 
-        connectSrc: ["'self'", "https://paucs.store" , "https://res.cloudinary.com" , "https://ui-avatars.com/api/" , "https://www.google.com"], 
+        connectSrc: ["'self'", "https://paucs.store", "https://res.cloudinary.com", "https://ui-avatars.com/api/", "https://www.google.com"], 
         mediaSrc: ["'self'", "https://paucs.store"], 
         formAction: ["'self'", "https://paucs.store"], 
+        requireTrustedTypesFor: ['script'] 
       },
     })
   );
