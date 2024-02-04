@@ -132,7 +132,7 @@ server.use(
     helmet.contentSecurityPolicy({
       directives: {
         defaultSrc: ["'self'"],
-        scriptSrc: ['self', 'strict-dynamic', 'https:'],
+        scriptSrc: ['self'],
         styleSrc: ["'self'", "https://fonts.googleapis.com"],
         imgSrc: ["'self'", "https://paucs.store", "https://res.cloudinary.com", "https://ui-avatars.com/api/"],
         fontSrc: ["'self'", "https://fonts.gstatic.com"], 
