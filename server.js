@@ -143,7 +143,7 @@ server.use(
       imgSrc: ["'self'", "https://paucs.store", "https://res.cloudinary.com", "https://ui-avatars.com/api"],
       fontSrc: ["'self'", 'https://fonts.googleapis.com', 'https://fonts.gstatic.com'],
       objectSrc: ["'none'"],
-      frameAncestors: ["'self'", "https://paucs.store" , "https://www.google.com"],
+      frameAncestors: ["'self'", "https://paucs.store" ,"https://www.google.com/recaptcha/api.js"],
       connectSrc: ["'self'", "https://paucs.store", "https://res.cloudinary.com", "https://ui-avatars.com/api",  "https://www.google.com/recaptcha/api.js"], // Allowing Google for reCAPTCHA
       mediaSrc: ["'self'", "https://paucs.store"],
       formAction: ["'self'", "https://paucs.store"],
