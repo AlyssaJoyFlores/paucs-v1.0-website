@@ -140,7 +140,7 @@ server.use(
       defaultSrc: ["'self'"],
       // scriptSrc: ["'strict-dynamic" , "'nonce-rAnd0m'"],
     //scriptSrc: ["'strict-dynamic' 'nonce-rAnd0m'"],
-        scriptSrc: ["'self'"],
+       scriptSrc: ["'self'", 'https://www.google.com'],
       styleSrc: ["'self'", "https://fonts.googleapis.com", "'unsafe-inline'"],
       imgSrc: ["'self'", "https://paucs.store", "https://res.cloudinary.com", "https://ui-avatars.com/api"],
       fontSrc: ["'self'", 'https://fonts.googleapis.com', 'https://fonts.gstatic.com'],
