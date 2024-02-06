@@ -24,7 +24,7 @@ const server = express();
 const serverIO = http.createServer(server)
 const io = socketIo(serverIO)
 
-server.set('trust proxy', true);
+server.set('trust proxy', false);
 
 
 // Socket.IO connection handling
@@ -147,6 +147,7 @@ server.use(
       objectSrc: ["'none'"],
       frameAncestors: ["'self'", "https://paucs.store" ,"https://www.google.com/recaptcha"],
       connectSrc: ["'self'", "https://paucs.store", "https://res.cloudinary.com", "https://ui-avatars.com/api",  "https://www.google.com/recaptcha/"], 
+    frameSrc: ["'self'", "https://www.google.com"],
       mediaSrc: ["'self'", "https://paucs.store"],
       formAction: ["'self'", "https://paucs.store"],
     },
