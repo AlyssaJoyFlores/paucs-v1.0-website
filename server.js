@@ -138,7 +138,7 @@ server.use(
   helmet.contentSecurityPolicy({
     directives: {
       defaultSrc: ["'self'"],
-      scriptSrc: ['https://www.google.com' , 'https://paucs.store/assets/index-20d2dddb.js'], // Ensure proper domain for reCAPTCHA
+      scriptSrc: ['https://www.google.com', 'https://paucs.store/assets/index-20d2dddb.js', 'https://www.gstatic.com'],
       styleSrc: ["'self'", "https://fonts.googleapis.com", "'unsafe-inline'"],
       imgSrc: ["'self'", "https://paucs.store", "https://res.cloudinary.com", "https://ui-avatars.com/api"],
       fontSrc: ["'self'", 'https://fonts.googleapis.com', 'https://fonts.gstatic.com'],
