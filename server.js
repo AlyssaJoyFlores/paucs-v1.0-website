@@ -135,36 +135,27 @@ server.use(morgan(morganFormat));
 
 
 server.use(
-    helmet.contentSecurityPolicy({
-      directives: {
-        defaultSrc: ["'self'"],
-        scriptSrc: ['strict-dynamic', 'nonce-rAnd0m' , 'https:'],
-        styleSrc: ["'self'", "https://fonts.googleapis.com", "'unsafe-inline'"], 
-        imgSrc: ["'self'", "https://paucs.store", "https://res.cloudinary.com", "https://ui-avatars.com/api"],
-        fontSrc: ["'self'", 'https://fonts.googleapis.com', 'https://fonts.gstatic.com'],
-        objectSrc: ["'none'"], 
-        frameAncestors: ["'self'", "https://paucs.store"], 
-        connectSrc: ["'self'", "https://paucs.store", "https://res.cloudinary.com", "https://ui-avatars.com/api", " www.google.com"], 
-        mediaSrc: ["'self'", "https://paucs.store"], 
-        formAction: ["'self'", "https://paucs.store"], 
-        requireTrustedTypesFor: ['scriptSrc']
-
-      },
+  helmet.contentSecurityPolicy({
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ['strict-dynamic', 'nonce-rAnd0m', 'https://www.google.com'], // Ensure proper domain for reCAPTCHA
+      styleSrc: ["'self'", "https://fonts.googleapis.com", "'unsafe-inline'"],
+      imgSrc: ["'self'", "https://paucs.store", "https://res.cloudinary.com", "https://ui-avatars.com/api"],
+      fontSrc: ["'self'", 'https://fonts.googleapis.com', 'https://fonts.gstatic.com'],
+      objectSrc: ["'none'"],
+      frameAncestors: ["'self'", "https://paucs.store"],
+      connectSrc: ["'self'", "https://paucs.store", "https://res.cloudinary.com", "https://ui-avatars.com/api", "https://www.google.com"], // Allowing Google for reCAPTCHA
+      mediaSrc: ["'self'", "https://paucs.store"],
+      formAction: ["'self'", "https://paucs.store"],
+      requireTrustedTypesFor: ['script'], // Adjusted based on error message
     },
-    helmet.frameguard({
-        action : "deny"
-    }),
-    helmet.hsts({
-        maxAge: 31536000 ,
-        includeSubDomains : false
-    }),
-    helmet.referrerPolicy({
-        policy : "no-referrer"
-    }),
-    helmet.noSniff()
-    
-)
+  }),
+  helmet.frameguard({ action: "deny" }),
+  helmet.hsts({ maxAge: 31536000, includeSubDomains: false }),
+  helmet.referrerPolicy({ policy: "no-referrer" }),
+  helmet.noSniff()
 );
+
 
 
 server.use(mongoSanitize())
