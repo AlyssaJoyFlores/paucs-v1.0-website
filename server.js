@@ -135,28 +135,27 @@ server.use(morgan(morganFormat));
 
 
 server.use(
-  helmet.contentSecurityPolicy({
-    directives: {
-      defaultSrc: ["'self'"],
-      // scriptSrc: ["'strict-dynamic" , "'nonce-rAnd0m'"],
-    //scriptSrc: ["'strict-dynamic' 'nonce-rAnd0m'"],
-       scriptSrc: ["'self'", 'https://www.google.com', 'https://www.gstatic.com'],
-      styleSrc: ["'self'", "https://fonts.googleapis.com", "'unsafe-inline'"],
-      imgSrc: ["'self'", "https://paucs.store", "https://res.cloudinary.com", "https://ui-avatars.com", "https://ui-avatars.com/api"],
-      fontSrc: ["'self'", 'https://fonts.googleapis.com', 'https://fonts.gstatic.com'],
-      objectSrc: ["'none'"],
-      frameAncestors: ["'self'", "https://paucs.store" ,"https://www.google.com/recaptcha"],
-      connectSrc: ["'self'", "https://paucs.store", "https://res.cloudinary.com", "https://ui-avatars.com/api",  "https://www.google.com/recaptcha/"], 
-    frameSrc: ["'self'", "https://www.google.com"],
-      mediaSrc: ["'self'", "https://paucs.store"],
-      formAction: ["'self'", "https://paucs.store"],
-    },
-  }),
-  helmet.frameguard({ action: "deny" }),
-  helmet.hsts({ maxAge: 31536000, includeSubDomains: false }),
-  helmet.referrerPolicy({ policy: "no-referrer" }),
-  helmet.noSniff()
-);
+    helmet.contentSecurityPolicy({
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'strict-dynamic'", 'https://www.google.com', 'https://www.gstatic.com'],
+        styleSrc: ["'self'", "https://fonts.googleapis.com", "'unsafe-inline'"],
+        imgSrc: ["'self'", "https://paucs.store", "https://res.cloudinary.com", "https://ui-avatars.com", "https://ui-avatars.com/api"],
+        fontSrc: ["'self'", 'https://fonts.googleapis.com', 'https://fonts.gstatic.com'],
+        objectSrc: ["'none'"],
+        frameAncestors: ["'self'", "https://paucs.store" ,"https://www.google.com/recaptcha"],
+        connectSrc: ["'self'", "https://paucs.store", "https://res.cloudinary.com", "https://ui-avatars.com/api",  "https://www.google.com/recaptcha/"], 
+        frameSrc: ["'self'", "https://www.google.com"],
+        mediaSrc: ["'self'", "https://paucs.store"],
+        formAction: ["'self'", "https://paucs.store"],
+        'require-trusted-types-for': ["'script'"] 
+      },
+    }),
+    helmet.frameguard({ action: "deny" }),
+    helmet.hsts({ maxAge: 31536000, includeSubDomains: false }),
+    helmet.referrerPolicy({ policy: "no-referrer" }),
+    helmet.noSniff(),
+  );
 
 
 
