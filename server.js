@@ -138,7 +138,7 @@ server.use(
     helmet.contentSecurityPolicy({
       directives: {
         defaultSrc: ["'self'"],
-        scriptSrc: ['strict-dynamic', 'nonce-rAnd0m', 'http:', 'https:'],
+        scriptSrc: ['strict-dynamic', 'nonce-rAnd0m' , 'https:'],
         styleSrc: ["'self'", "https://fonts.googleapis.com", "'unsafe-inline'"], 
         imgSrc: ["'self'", "https://paucs.store", "https://res.cloudinary.com", "https://ui-avatars.com/api"],
         fontSrc: ["'self'", 'https://fonts.googleapis.com', 'https://fonts.gstatic.com'],
@@ -147,7 +147,7 @@ server.use(
         connectSrc: ["'self'", "https://paucs.store", "https://res.cloudinary.com", "https://ui-avatars.com/api", "https://www.google.com/recaptcha"], 
         mediaSrc: ["'self'", "https://paucs.store"], 
         formAction: ["'self'", "https://paucs.store"], 
-        requireTrustedTypesFor: ['script-src']
+        requireTrustedTypesFor: ['scriptSrc']
 
       },
     }, 
