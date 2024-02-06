@@ -141,13 +141,14 @@ server.use(
         scriptSrc: ['strict-dynamic', 'nonce-rAnd0m', 'http:', 'https:'],
         styleSrc: ["'self'", "https://fonts.googleapis.com", "'unsafe-inline'"], 
         imgSrc: ["'self'", "https://paucs.store", "https://res.cloudinary.com", "https://ui-avatars.com/api"],
-        fontSrc: ["'self'", "https://fonts.googleapis.com" , "https://fonts.googleapis.com/css2"], 
+        fontSrc: ["'self'", "https://fonts.googleapis.com" , 'https://fonts.googleapis.com/css2?family=Exo:wght@400;500;600;700&display=swap' , 'https://fonts.googleapis.com/css2?family=Dancing+Script:wght@500&family=Lato:wght@700;900&family=Montserrat:wght@300;400;500;600;700;800;900&family=Quicksand:wght@300;400;500;700&family=Ubuntu:wght@400;500;700&display=swap'], 
         objectSrc: ["'none'"], 
         frameAncestors: ["'self'", "https://paucs.store"], 
         connectSrc: ["'self'", "https://paucs.store", "https://res.cloudinary.com", "https://ui-avatars.com/api", "https://www.google.com", "https://www.google.com/recaptcha/api/siteverify"], 
         mediaSrc: ["'self'", "https://paucs.store"], 
         formAction: ["'self'", "https://paucs.store"], 
-        requireTrustedTypesFor: ['script']
+         requireTrustedTypesFor: ['script-src']
+
       },
     }, 
     helmet.frameguard({
