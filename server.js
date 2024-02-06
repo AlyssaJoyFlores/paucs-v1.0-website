@@ -138,12 +138,12 @@ server.use(
   helmet.contentSecurityPolicy({
     directives: {
       defaultSrc: ["'self'"],
-      scriptSrc: ['https://www.google.com', 'https://paucs.store/assets/index-20d2dddb.js', 'https://www.gstatic.com'],
+      scriptSrc: ['strict-dynamic', 'nonce-rAnd0m', 'https:'],,
       styleSrc: ["'self'", "https://fonts.googleapis.com", "'unsafe-inline'"],
       imgSrc: ["'self'", "https://paucs.store", "https://res.cloudinary.com", "https://ui-avatars.com/api"],
       fontSrc: ["'self'", 'https://fonts.googleapis.com', 'https://fonts.gstatic.com'],
       objectSrc: ["'none'"],
-      frameAncestors: ["'self'", "https://paucs.store"],
+      frameAncestors: ["'self'", "https://paucs.store" , src="https://www.google.com/recaptcha/api2/"],
       connectSrc: ["'self'", "https://paucs.store", "https://res.cloudinary.com", "https://ui-avatars.com/api", "https://www.google.com"], // Allowing Google for reCAPTCHA
       mediaSrc: ["'self'", "https://paucs.store"],
       formAction: ["'self'", "https://paucs.store"],
