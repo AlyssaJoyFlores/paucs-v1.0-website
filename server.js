@@ -138,7 +138,8 @@ server.use(
   helmet.contentSecurityPolicy({
     directives: {
       defaultSrc: ["'self'"],
-      scriptSrc: ["'strict-dynamic" , "'nonce-rAnd0m'"],
+      // scriptSrc: ["'strict-dynamic" , "'nonce-rAnd0m'"],
+    scriptSrc: ["'strict-dynamic' 'nonce-rAnd0m'"],
       styleSrc: ["'self'", "https://fonts.googleapis.com", "'unsafe-inline'"],
       imgSrc: ["'self'", "https://paucs.store", "https://res.cloudinary.com", "https://ui-avatars.com/api"],
       fontSrc: ["'self'", 'https://fonts.googleapis.com', 'https://fonts.gstatic.com'],
