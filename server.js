@@ -144,10 +144,10 @@ server.use(
       fontSrc: ["'self'", 'https://fonts.googleapis.com', 'https://fonts.gstatic.com'],
       objectSrc: ["'none'"],
       frameAncestors: ["'self'", "https://paucs.store"],
-      connectSrc: ["'self'", "https://paucs.store", "https://res.cloudinary.com", "https://ui-avatars.com/api",  "https://www.google.com/recaptcha/api2/"], // Allowing Google for reCAPTCHA
+      connectSrc: ["'self'", "https://paucs.store", "https://res.cloudinary.com", "https://ui-avatars.com/api",  "https://www.google.com/recaptcha/api/"], // Allowing Google for reCAPTCHA
       mediaSrc: ["'self'", "https://paucs.store"],
       formAction: ["'self'", "https://paucs.store"],
-      requireTrustedTypesFor: ['script' , "https://www.google.com"], // Adjusted based on error message
+      requireTrustedTypesFor: ['script'], // Adjusted based on error message
     },
   }),
   helmet.frameguard({ action: "deny" }),
