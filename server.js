@@ -147,7 +147,7 @@ server.use(
         connectSrc: ["'self'", "https://paucs.store", "https://res.cloudinary.com", "https://ui-avatars.com/api", "https://www.google.com", "https://www.google.com/recaptcha/api/siteverify"], 
         mediaSrc: ["'self'", "https://paucs.store"], 
         formAction: ["'self'", "https://paucs.store"], 
-         requireTrustedTypesFor: ['script-src']
+        requireTrustedTypesFor: ['script-src']
 
       },
     }, 
