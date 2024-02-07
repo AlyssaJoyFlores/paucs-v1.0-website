@@ -147,8 +147,7 @@ server.use(
         connectSrc: ["'self'", "https://paucs.store", "https://res.cloudinary.com", "https://ui-avatars.com/api",  "https://www.google.com/recaptcha/"], 
         frameSrc: ["'self'", "https://www.google.com"],
         mediaSrc: ["'self'", "https://paucs.store"],
-        formAction: ["'self'", "https://paucs.store"],
-        'require-trusted-types-for': ["'script'"] 
+        formAction: ["'self'", "https://paucs.store"]
       },
     }),
     helmet.frameguard({ action: "deny" }),
