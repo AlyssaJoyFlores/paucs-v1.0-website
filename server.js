@@ -142,7 +142,7 @@ server.use(
         styleSrc: ["'self'", "https://fonts.googleapis.com", "'unsafe-inline'"],
         imgSrc: ["'self'", "https://paucs.store", "https://res.cloudinary.com", "https://ui-avatars.com", "https://ui-avatars.com/api"],
         fontSrc: ["'self'", 'https://fonts.googleapis.com', 'https://fonts.gstatic.com'],
-        objectSrc: ["'none'"],
+        objectSrc: ["'self'" , "https://paucs.store"],
         frameAncestors: ["'self'", "https://paucs.store" ,"https://www.google.com/recaptcha"],
         connectSrc: ["'self'", "https://paucs.store", "https://res.cloudinary.com", "https://ui-avatars.com/api",  "https://www.google.com/recaptcha/"], 
         frameSrc: ["'self'", "https://www.google.com"],
