@@ -158,7 +158,7 @@ const login = async (req, res, role) => {
         throw new CustomError.BadRequestError('reCAPTCHA verification failed')
     }
     
-    console.log('reCAPTCHA Response:', recaptchaResponse.data);
+
 
     // check if email and password exist in db
     if (!school_email || !password) {
