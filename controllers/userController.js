@@ -6,20 +6,100 @@ const {StatusCodes} = require('http-status-codes')
 const { attachedCookiesToResponse, createTokenUser, checkPermissions} = require('../utils')
 
 const getAllUsers = async(req, res) => {
-    const users = await User.find({role: 'student'}).select('-password')
-    //({role: 'student'})
-    res.status(StatusCodes.OK).json({users})
+const page = parseInt(req.query.page) || 1;
+  const pageSize = Number(req.query.pageSize) || 12;
+  const skip = (page - 1) * pageSize;
+
+  const { college_dept, course } = req.query;
+  const searchQuery = req.query.search;
+
+  const filterConditions = {};
+  if (college_dept) filterConditions.college_dept = college_dept;
+  if (course) filterConditions.course = course;
+
+  if (searchQuery) {
+    filterConditions.$or = [
+      { full_name: { $regex: searchQuery, $options: 'i' } },
+      { school_id: { $regex: searchQuery, $options: 'i' } }
+    ];
+  }
+
+  const overAllUser = await User.countDocuments();
+  const totalUser = await User.countDocuments(filterConditions);
+  const totalPages = Math.ceil(totalUser / pageSize);
+
+  const users = await User.find({ role: 'student', ...filterConditions })
+    .select('-password')
+    .sort({ full_name: 1 })
+    .skip(skip)
+    .limit(pageSize)
+    .exec();
+
+  res.status(StatusCodes.OK).json({ users, overAllUser, totalUser, totalPages });
+
 }
 
+const searchUsers = async (req, res) => {
+  const page = parseInt(req.query.page) || 1;
+  const pageSize = Number(req.query.pageSize) || 12;
+  const skip = (page - 1) * pageSize;
+
+  const { college_dept, course } = req.query;
+  const searchQuery = req.query.search;
+
+  const filterConditions = {};
+  if (college_dept) filterConditions.college_dept = college_dept;
+  if (course) filterConditions.course = course;
+
+  if (searchQuery) {
+    filterConditions.$or = [
+      { full_name: { $regex: searchQuery, $options: 'i' } },
+      { school_id: { $regex: searchQuery, $options: 'i' } }
+    ];
+  }
+
+  const overAllUser = await User.countDocuments();
+  const totalUser = await User.countDocuments(filterConditions);
+  const totalPages = Math.ceil(totalUser / pageSize);
+
+  const users = await User.find({ role: 'student', ...filterConditions })
+    .select('-password')
+    .sort({ full_name: 1 })
+    .skip(skip)
+    .limit(pageSize)
+    .exec();
+
+  res.status(StatusCodes.OK).json({ users, overAllUser, totalUser, totalPages });
+
+};
+
+
+ 
+// const page = parseInt(req.query.page) || 1;
+// const pageSize = parseInt(req.query.pageSize) || 12;
+// const skip = (page - 1) * pageSize;
+
+// const users = await User.find({role: 'student'})
+// .sort({ full_name: 1 })
+// .select('-password')
+// .skip(skip)
+// .limit(pageSize)
+// .exec();
+
+// const totalUser = await User.countDocuments(users)
+// const totalPages = Math.ceil(totalUser / pageSize);
+
+
+// res.status(StatusCodes.OK).json({users, totalUser, totalPages})
 
 
 const getSingleUser = async(req, res) => {
-    const user = await User.findOne({_id: req.params.id }).select('-password')
-    if (!user) {
-        throw new CustomError.NotFoundError(`No user with id : ${req.params.id}`);
-      }
-      checkPermissions(req.user, user._id);
-    res.status(StatusCodes.OK).json({msg: 'get single user', user})
+  const user = await User.findOne({_id: req.params.id }).select('-password')
+  if (!user) {
+      throw new CustomError.NotFoundError(`No user with id : ${req.params.id}`);
+    }
+    checkPermissions(req.user, user._id);
+  res.status(StatusCodes.OK).json({msg: 'get single user', user})
 }
 
 
@@ -29,113 +109,6 @@ const showCurrentUser = async(req, res) => {
   // res.status(StatusCodes.OK).json({user: req.user});
   res.status(StatusCodes.OK).json(req.user);
 }
-
-
-// const showCurrentUser = async(req, res) => {
-//   const  userId = req.params.id;
-//     // Check if an 'id' parameter is present in the request
-   
-//     const user = await User.findOne({ _id: userId }).select('-password');
-
-//         if (!user) {
-//             throw new CustomError.NotFoundError(`No user with id : ${userId}`);
-//         }
-
-//         res.status(StatusCodes.OK).json({ user });
-// }
-
-
-// const updateUser = async(req, res) => {
-//     const {
-//         school_campus,
-//         college_dept,
-//         full_name,
-//         course,
-//         year,
-//         section,
-//         gender,
-//         birthdate,
-//         address,
-//         orf_image,
-//         profile_image
-//     } = req.body
-
-//     // if(!orf_image){
-//     //     throw new CustomError.BadRequestError('Please Provide Your ORF')
-//     // }
-
-
-//     const user = await User.findOne({_id: req.user.userId})
-//     if(!user){
-//         throw new CustomError.NotFoundError('User not found')
-//     }
-
-//     user.school_campus = school_campus
-//     user.college_dept = college_dept
-//     user.full_name = full_name
-//     user.course = course
-//     user.year = year
-//     user.section = section
-//     user.gender = gender
-//     user.birthdate = birthdate
-//     user.address = address
-//     user.orf_image = orf_image
-//     user.profile_image = profile_image
-//     user.save()
-
-//     const tokenUser = createTokenUser(user)
-//     attachedCookiesToResponse({res, user:tokenUser})
-
-//     res.status(StatusCodes.OK).json({msg: 'update user', user:tokenUser, user})
-// }
-
-
-//update user with findOneAndUpdate
-// const updateUser = async (req, res) => {
-//     const {
-//         school_campus,
-//         college_dept,
-//         full_name,
-//         course,
-//         year,
-//         section,
-//         gender,
-//         birthdate,
-//         address,
-//         orf_image,
-//         profile_image,
-//         cover_image
-//     } = req.body
-
-// //   if (!school_campus || !college_dept) {
-// //     throw new CustomError.BadRequestError('Please provide all values');
-// //   }
-
-//   const user = await User.findOneAndUpdate(
-//     { _id: req.user.userId },
-//     {  school_campus,
-//         college_dept,
-//         full_name,
-//         course,
-//         year,
-//         section,
-//         gender,
-//         birthdate,
-//         address,
-//         orf_image,
-//         profile_image,
-//         cover_image },
-//     { new: true, runValidators: true }
-//   );
-
-//   if(!user){
-//     throw new CustomError.NotFoundError('User')
-//   }
-//   const tokenUser = createTokenUser(user);
-//   attachedCookiesToResponse({ res, user: tokenUser });
-//   res.status(StatusCodes.OK).json({ user: tokenUser });
-// };
-
 
 
 const updateUser = async (req, res) => {
@@ -159,25 +132,21 @@ const updateUser = async (req, res) => {
 
 
 
-
-
-
-
 const updateUserPassword = async(req, res) => {
-    const { oldPassword, newPassword } = req.body;
-    if (!oldPassword || !newPassword) {
-      throw new CustomError.BadRequestError('Please provide both values');
-    }
-    const user = await User.findOne({ _id: req.user.userId });
-  
-    const isPasswordCorrect = await user.comparePassword(oldPassword);
-    if (!isPasswordCorrect) {
-      throw new CustomError.UnauthenticatedError('Invalid Credentials');
-    }
-    user.password = newPassword;
-  
-    await user.save();
-    res.status(StatusCodes.OK).json({ msg: 'Success! Password Updated.' });
+  const { oldPassword, newPassword } = req.body;
+  if (!oldPassword || !newPassword) {
+    throw new CustomError.BadRequestError('Please provide both values');
+  }
+  const user = await User.findOne({ _id: req.user.userId });
+
+  const isPasswordCorrect = await user.comparePassword(oldPassword);
+  if (!isPasswordCorrect) {
+    throw new CustomError.UnauthenticatedError('Invalid Credentials');
+  }
+  user.password = newPassword;
+
+  await user.save();
+  res.status(StatusCodes.OK).json({ msg: 'Success! Password Updated.' });
 }
 
 const verifiedOrf = async(req, res) => {
@@ -211,12 +180,13 @@ const verifiedOrf = async(req, res) => {
 
 
 module.exports = {
-    getAllUsers,
-    getSingleUser,
-    showCurrentUser,
-    updateUser,
-    updateUserPassword,
-    verifiedOrf
+  getAllUsers,
+  getSingleUser,
+  showCurrentUser,
+  updateUser,
+  updateUserPassword,
+  verifiedOrf,
+  searchUsers
 }
 
 

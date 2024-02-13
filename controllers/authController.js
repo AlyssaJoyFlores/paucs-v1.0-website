@@ -30,9 +30,19 @@ const register = async (req, res) => {
         cover_image
     } = req.body;
 
+    if (!/^(\d{2}-\d{4}-\d{6})$/.test(school_id)) {
+        throw new CustomError.BadRequestError('Invalid school ID format. Please use the format 00-0000-000000');
+    }
+
+
     const emailExist = await User.findOne({ school_email });
     if (emailExist) {
         throw new CustomError.BadRequestError('Email Already Exist');
+    }
+
+    const schoolIdExist = await User.findOne({ school_id });
+    if (schoolIdExist) {
+        throw new CustomError.BadRequestError('School Id Already Exist');
     }
 
     const firstAccount = await User.countDocuments({}) === 0;
@@ -128,45 +138,41 @@ const verifyEmail =  async(req, res) => {
 }
 
 
-const loginStudent = async (req, res) => {
-    await login(req, res, ['student']);
-}
-
-const loginAdmin = async (req, res) => {
-    await login(req, res, ['admin']);
-}
 
 
-const login = async (req, res, role) => {
-    const { school_email, password, recaptchaToken } = req.body;
 
-      // Verify reCAPTCHA token
-    const secretKey = process.env.CAPTCHA_KEY; // Replace with your reCAPTCHA secret key
+const login = async (req, res) => {
+    const { school_id, password, recaptchaToken } = req.body;
 
-    if (!secretKey) {
-        throw new CustomError.BadRequestError('reCAPTCHA secret key is missing or invalid');
-    }
+      //Verify reCAPTCHA token
+    // const secretKey = process.env.CAPTCHA_KEY; // Replace with your reCAPTCHA secret key
 
-    if (!recaptchaToken) {
-        throw new CustomError.BadRequestError('reCAPTCHA secret key is missing or invalid');
-    }
+    // if (!secretKey) {
+    //     throw new CustomError.BadRequestError('reCAPTCHA secret key is missing or invalid');
+    // }
+
+    // if (!recaptchaToken) {
+    //     throw new CustomError.BadRequestError('reCAPTCHA secret key is missing or invalid');
+    // }
   
-    const recaptchaResponse = await axios.post( `https://www.google.com/recaptcha/api/siteverify?secret=${secretKey}&response=${recaptchaToken}`)
+    // const recaptchaResponse = await axios.post( `https://www.google.com/recaptcha/api/siteverify?secret=${secretKey}&response=${recaptchaToken}`)
 
-    if (!recaptchaResponse.data.success) {
-        const errorDetails = JSON.stringify(recaptchaResponse.data);
-        throw new CustomError.BadRequestError('reCAPTCHA verification failed')
-    }
+    // if (!recaptchaResponse.data.success) {
+    //     const errorDetails = JSON.stringify(recaptchaResponse.data);
+    //     throw new CustomError.BadRequestError('reCAPTCHA verification failed')
+    // }
     
-
+    if (!/^(\d{2}-\d{4}-\d{6})$/.test(school_id)) {
+        throw new CustomError.BadRequestError('Invalid school ID format. Please use the format 00-0000-000000');
+    }
 
     // check if email and password exist in db
-    if (!school_email || !password) {
+    if (!school_id || !password) {
         throw new CustomError.BadRequestError('Please provide email or password');
     }
 
     // check user if exist in db, if not throw error
-    const user = await User.findOne({ school_email, role: { $in: role } });
+    const user = await User.findOne({ school_id });
     if (!user) {
         throw new CustomError.UnauthenticatedError('Invalid Credentials');
     }
@@ -489,9 +495,8 @@ const addConfigureSettings = async (req, res) => {
 module.exports = {
     register,
     verifyEmail,
-    loginStudent,
-    loginAdmin,
     logout,
+    login,
     forgotPassword,
     resetPassword,
     validateConfigureSettings,
