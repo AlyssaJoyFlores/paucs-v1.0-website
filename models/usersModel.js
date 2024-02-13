@@ -13,7 +13,8 @@ const configureSchema = new mongoose.Schema({
 
 const usersSchema = new mongoose.Schema({
     school_id: {
-        type: Number,
+        type: String,
+        unique: true 
     },
     school_email: {
         type: String,
@@ -125,7 +126,14 @@ const usersSchema = new mongoose.Schema({
 
 
 
-
+usersSchema.pre('save', function(next) {
+    
+    if (!this.school_id || !/^\d{2}-\d{4}-\d{6}$/.test(this.school_id)) {
+        const formattedId = String(this.school_id).replace(/(\d{2})(\d{4})(\d{6})/, "$1-$2-$3");
+        this.school_id = formattedId;
+    }
+    next();
+});
 
 
 usersSchema.pre('save', async function(){
