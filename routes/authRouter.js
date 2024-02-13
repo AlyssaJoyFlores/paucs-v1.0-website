@@ -16,9 +16,8 @@ const apiLimiter = rateLimiter({
 const {
     register,
     verifyEmail,
-    loginStudent,
-    loginAdmin,
     logout,
+    login,
     forgotPassword,
     resetPassword,
     addConfigureSettings,
@@ -26,9 +25,8 @@ const {
     getConfigureQuestion
 } = require('../controllers/authController')
 
-router.route('/register').post(register)
-router.route('/loginStudent').post(apiLimiter, loginStudent)
-router.route('/loginAdmin').post(loginAdmin)
+router.route('/register').post(apiLimiter, register)
+router.route('/login').post(apiLimiter, login)
 router.route('/logout').delete(authenticateUser, logout)
 router.route('/verify-email').post(verifyEmail)
 router.route('/forgot-password').post(forgotPassword);

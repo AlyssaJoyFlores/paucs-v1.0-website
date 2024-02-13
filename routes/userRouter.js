@@ -12,11 +12,13 @@ const {
     showCurrentUser,
     updateUser,
     updateUserPassword,
-    verifiedOrf
+    verifiedOrf,
+    searchUsers
 } = require('../controllers/userController')
 
 router.route('/getAllUsers').get(authenticateUser, getAllUsers)
 router.route('/showMe').get(authenticateUser, showCurrentUser)
+router.route('/search').get(authenticateUser, searchUsers)
 
 router.route('/updateUserPassword').patch(authenticateUser, updateUserPassword)
 
