@@ -152,7 +152,7 @@ const login = async (req, res) => {
     }
 
     if (!recaptchaToken) {
-        throw new CustomError.BadRequestError('reCAPTCHA secret key is missing or invalid');
+        throw new CustomError.BadRequestError(Please verify reCAPTCHA');
     }
   
     const recaptchaResponse = await axios.post( `https://www.google.com/recaptcha/api/siteverify?secret=${secretKey}&response=${recaptchaToken}`)
