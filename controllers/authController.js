@@ -110,7 +110,7 @@ const register = async (req, res) => {
         origin
     })
 
-    res.status(StatusCodes.CREATED).json({ msg: 'Please check you email to verify your account'});
+    res.status(StatusCodes.CREATED).json({ msg: 'Please check your email to verify your account'});
 };
 
 
@@ -152,7 +152,7 @@ const login = async (req, res) => {
     }
 
     if (!recaptchaToken) {
-        throw new CustomError.BadRequestError(Please verify reCAPTCHA');
+        throw new CustomError.BadRequestError('Please verify reCAPTCHA');
     }
   
     const recaptchaResponse = await axios.post( `https://www.google.com/recaptcha/api/siteverify?secret=${secretKey}&response=${recaptchaToken}`)
