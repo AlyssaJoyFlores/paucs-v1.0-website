@@ -24,7 +24,7 @@ const server = express();
 const serverIO = http.createServer(server)
 const io = socketIo(serverIO)
 
-server.set('trust proxy', false);
+server.set('trust proxy', 1);
 
 
 // Socket.IO connection handling
