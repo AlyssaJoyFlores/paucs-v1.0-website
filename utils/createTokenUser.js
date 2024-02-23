@@ -1,13 +1,13 @@
 
 const createTokenUser = (user) => {
     return {
-        name:user.full_name, 
+        //name:user.full_name, 
         userId:user._id, 
         role:user.role,
         school_email: user.school_email,
         school_campus: user.school_campus,
         college_dept: user.college_dept,
-        // full_name: user.full_name,
+        full_name: user.full_name,
         course: user.course,
         year: user.year,
         section: user.section,
