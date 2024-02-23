@@ -3,9 +3,10 @@ const Token = require('../models/tokenModel')
 const CustomError = require('../errors')
 const crypto = require('crypto')
 const axios = require('axios');
+const moment = require('moment')
 require('dotenv').config();
 const {StatusCodes} = require('http-status-codes')
-const { attachedCookiesToResponse, createTokenUser, sendVerificationEmail, sendResetPasswordEmail, createHash} = require('../utils')
+const { attachedCookiesToResponse, createTokenUser, sendVerificationEmail, sendResetPasswordEmail, sendLoginAttempEmail, createHash} = require('../utils')
 
 
 
@@ -48,6 +49,8 @@ const register = async (req, res) => {
     const firstAccount = await User.countDocuments({}) === 0;
     const role = firstAccount? 'admin' : 'student';
 
+    const userAgent = req.headers['user-agent'];
+
     //verification for email
     // this is the token for confirmation email
     // importing node package crypto to hash token
@@ -59,10 +62,10 @@ const register = async (req, res) => {
         // If the role is admin, create an admin user
         const { school_email, password, full_name } = req.body;
         user = await User.create({
+            school_id,
             school_email,
             password,
             full_name,
-            profile_image,
             gender,
             birthdate,
             address,
@@ -70,7 +73,8 @@ const register = async (req, res) => {
             cover_image,
             role: ['admin'],
             status,
-            verificationToken
+            verificationToken,
+            allowedDevices: [userAgent]
         });
     } else {
         // If the role is student, create a student user
@@ -93,7 +97,8 @@ const register = async (req, res) => {
             role,
             status,
             freeUnifStatus,
-            verificationToken
+            verificationToken,
+            allowedDevices: [userAgent]
         });
     }
 
@@ -140,19 +145,18 @@ const verifyEmail =  async(req, res) => {
 
 
 
-
 const login = async (req, res) => {
     const { school_id, password, recaptchaToken } = req.body;
 
-      //Verify reCAPTCHA token
-    const secretKey = process.env.CAPTCHA_KEY; // Replace with your reCAPTCHA secret key
+    //Verify reCAPTCHA token
+    const secretKey = process.env.CAPTCHA_KEY;
 
     if (!secretKey) {
         throw new CustomError.BadRequestError('reCAPTCHA secret key is missing or invalid');
     }
 
     if (!recaptchaToken) {
-        throw new CustomError.BadRequestError('Please verify reCAPTCHA');
+        throw new CustomError.BadRequestError('reCAPTCHA secret key is missing or invalid');
     }
   
     const recaptchaResponse = await axios.post( `https://www.google.com/recaptcha/api/siteverify?secret=${secretKey}&response=${recaptchaToken}`)
@@ -162,51 +166,97 @@ const login = async (req, res) => {
         throw new CustomError.BadRequestError('reCAPTCHA verification failed')
     }
     
-    if (!/^(\d{2}-\d{4}-\d{6})$/.test(school_id)) {
-        throw new CustomError.BadRequestError('Invalid school ID format. Please use the format 00-0000-000000');
-    }
 
-    // check if email and password exist in db
+    // Check if email and password exist in db
     if (!school_id || !password) {
         throw new CustomError.BadRequestError('Please provide email or password');
     }
 
-    // check user if exist in db, if not throw error
+    // Check user if exist in db, if not throw error
     const user = await User.findOne({ school_id });
     if (!user) {
         throw new CustomError.UnauthenticatedError('Invalid Credentials');
     }
 
+   
     if (user.status === 'restricted') {
+        const currentTime = moment.utc(); // Current time in UTC
+        const restrictionStartTime = moment.utc(user.restrictionStartTime); // Restriction start time in UTC
+        const restrictionEndTime = restrictionStartTime.clone().add(2, 'minutes'); // Restriction end time in UTC
+        const remainingTime = moment.duration(restrictionEndTime.diff(currentTime)); // Remaining time as a duration
+    
+        const daysRemaining = remainingTime.days();
+        const hoursRemaining = remainingTime.hours();
+        const minutesRemaining = remainingTime.minutes();
+        const secondsRemaining = remainingTime.seconds();
+    
+        let dateTimeMessage = '';
+    
+        if (daysRemaining > 0) {
+            dateTimeMessage += `${daysRemaining} day${daysRemaining > 1 ? 's' : ''} `;
+        }
+        if (hoursRemaining > 0) {
+            dateTimeMessage += `${hoursRemaining} hour${hoursRemaining > 1 ? 's' : ''} `;
+        }
+        if (minutesRemaining > 0) {
+            dateTimeMessage += `${minutesRemaining} minute${minutesRemaining > 1 ? 's' : ''} `;
+        }
+        if (secondsRemaining > 0) {
+            dateTimeMessage += `${secondsRemaining} second${secondsRemaining > 1 ? 's' : ''} `;
+        }
+    
         throw new CustomError.UnauthorizedError(
-            'Sorry, your account is restricted. You are not allowed to access this system. Try contacting the admin'
+            `Your account is currently restricted. It will be unrestricted in ${dateTimeMessage}`
         );
     }
+      
 
-    // check if password correct, if not throw error
+
+    // Check if password correct, if not throw error
     const isPasswordCorrect = await user.comparePassword(password);
     if (!isPasswordCorrect) {
         throw new CustomError.UnauthenticatedError('Invalid Credentials, wrong password');
     }
 
-    // check if user is verified or already verified its email, if not throw error
+    // Check if user is verified or already verified its email, if not throw error
     if (!user.isVerified) {
         throw new CustomError.UnauthenticatedError('Please verify your email');
     }
 
-    //add the configuration here
 
+    const userAgentDevice = req.headers['user-agent'];
+
+    if (user.blockedDevices.includes(userAgentDevice)) {
+        throw new CustomError.UnauthorizedError('Your device has been blocked. Please contact support for assistance.');
+    }
+    
+
+    if (!user.allowedDevices.includes(userAgentDevice)) {
+        sendLoginAttemptNotification(user, req.ip, userAgentDevice);
+        throw new CustomError.UnauthenticatedError('Unrecognized device, please check your email to confirm it was you');
+    }
+    
+  
+    // // Check for existing active sessions
+    // const activeSessions = await Token.find({ user: user._id, isValid: true });
+
+    // if (activeSessions.length > 0) {
+    //     // Notify the user about the login attempt
+    //     sendLoginAttemptNotification(user, req.ip, userAgentDevice);
+    //     throw new CustomError.UnauthorizedError(`Login failed. User Unauthorized`);
+    // }
+
+    // Add the configuration here
+    // ...
 
     const tokenUser = createTokenUser(user);
 
-    // setup token for refresh and access
+    // Setup token for refresh and access
     // refreshToken
     let refreshToken = '';
 
-    // check for existing refreshToken
-    const existingToken = await Token.findOne({
-        user: user._id
-    });
+    // Check for existing refreshToken
+    const existingToken = await Token.findOne({ user: user._id });
 
     if (existingToken) {
         const { isValid } = existingToken;
@@ -220,12 +270,12 @@ const login = async (req, res) => {
         return;
     }
 
-    // setup token
+    // Setup token
     refreshToken = crypto.randomBytes(40).toString('hex');
     const userAgent = req.headers['user-agent'];
     const ip = req.ip;
     const userToken = { refreshToken, userAgent, ip, user: user._id };
-    // token create
+    // Token create
     await Token.create(userToken);
 
     attachedCookiesToResponse({ res, user: tokenUser, refreshToken });
@@ -236,6 +286,79 @@ const login = async (req, res) => {
 
 
 
+const sendLoginAttemptNotification = async(user, ipAddress, deviceLog) => {
+  
+    // const origin = 'http://localhost:3000'
+    const origin = 'https://paucs.store'
+
+    await sendLoginAttempEmail({
+        name: user.full_name,
+        school_email: user.school_email,
+        dateLog: new Date(),
+        device: deviceLog,
+        school_id: user.school_id,
+        origin
+      
+    })
+
+
+};
+
+
+
+const manageDevices  = async (req, res) => {
+    const { action, device, school_id } = req.query;
+
+    const user = await User.findOne({ school_id });
+
+    if (!user) {
+        return res.status(404).json({ message: 'User not found' });
+    }
+
+    if (user.deviceChanges >= 30) {
+        return res.status(400).json({ message: 'You have reached the limit of device changes.' });
+    }
+
+    if (action === 'allow') {
+      
+        if (user.allowedDevices.includes(device)) {
+            return res.status(400).json({ message: 'Device already allowed for this user' });
+        }
+
+        if (user.blockedDevices.includes(device)) {
+            user.blockedDevices.pull(device);
+            user.deviceChanges++;
+        }
+
+        user.allowedDevices.push(device);
+    } else if (action === 'block') {
+
+        if (user.blockedDevices.includes(device)) {
+            return res.status(400).json({ message: 'Device already blocked for this user' });
+        }
+
+        if (user.allowedDevices.includes(device)) {
+            user.allowedDevices.pull(device);
+            user.deviceChanges++;
+        }
+    
+        user.blockedDevices.push(device);
+    } else {
+        return res.status(400).json({ message: 'Invalid action. Please specify either "allow" or "block".' });
+    }
+
+    await user.save();
+
+        
+    const tokenUser = createTokenUser(user);
+    attachedCookiesToResponse({ res, user: tokenUser });
+
+
+    return res.status(200).json({ message: `Device ${action}ed successfully` });
+};
+
+
+//======================================
 
 
 
@@ -501,5 +624,6 @@ module.exports = {
     resetPassword,
     validateConfigureSettings,
     addConfigureSettings,
-    getConfigureQuestion
+    getConfigureQuestion,
+    manageDevices
 }

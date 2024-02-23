@@ -57,7 +57,12 @@ const ProductSchema = new mongoose.Schema({
         type: mongoose.Types.ObjectId,
         ref: 'User',
         required: true
+    },
+    isArchived: {
+        type: Boolean,
+        default: false
     }
+    
 }, {timestamps: true,
     toJSON:{virtuals:true}, 
     toObject:{virtuals:true}

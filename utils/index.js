@@ -4,6 +4,7 @@ const checkPermissions = require('./checkPermission');
 const sendVerificationEmail = require('./sendVerificationEmail');
 const sendResetPasswordEmail = require('./sendResetPasswordEmail');
 const sendNotificationOrderStatus = require('./sendNotificationOrder')
+const sendLoginAttempEmail = require('./sendLoginAttemptEmail')
 const createHash = require('./createHash');
 
 module.exports = {
@@ -15,6 +16,7 @@ module.exports = {
   sendVerificationEmail,
   sendResetPasswordEmail,
   sendNotificationOrderStatus,
+  sendLoginAttempEmail,
   createHash,
   getUserFromToken
 };

@@ -13,9 +13,12 @@ const {
     updateUser,
     updateUserPassword,
     verifiedOrf,
-    searchUsers
+    searchUsers,
+    registerUser
 } = require('../controllers/userController')
 
+
+router.route('/registerUser').post([authenticateUser, authorizePermissions('admin')], registerUser)
 router.route('/getAllUsers').get(authenticateUser, getAllUsers)
 router.route('/showMe').get(authenticateUser, showCurrentUser)
 router.route('/search').get(authenticateUser, searchUsers)

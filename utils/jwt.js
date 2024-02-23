@@ -53,8 +53,9 @@ const attachedCookiesToResponse = ({ res, user, refreshToken }) => {
     const accessTokenJWT = createJWT({ payload: { user } });
     const refreshTokenJWT = createJWT({ payload: { user, refreshToken } });
 
-    const oneDay = 1000 * 60 * 60 * 24;
-    const longerDays = 1000 * 60 * 60 * 24 * 30; // 30 days
+    const oneDay = 1000 * 60 * 60 * 5; //5 hrs
+    const longerDays = 1000 * 60 * 60 * 24; // 1 day
+    // const longerDays = 1000 * 60 * 60 * 24 * 30; // 30 days
 
     res.cookie('accessToken', accessTokenJWT, {
         httpOnly: true,

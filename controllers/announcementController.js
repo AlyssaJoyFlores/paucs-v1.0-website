@@ -7,48 +7,93 @@ const fs = require('fs')
 const { StatusCodes } = require('http-status-codes');
 const CustomError = require('../errors');
 
+const getSingleAnnouncement = async(req, res) => {
+    const announcement = await Announcement.findOne({_id: req.params.id})
+    if (!announcement) {
+        throw new CustomError.NotFoundError(`No Announcement found with id : ${req.params.id}`);
+    }
+
+    res.status(StatusCodes.OK).json({msg: 'get single announcement', announcement})
+}
+
+
 // to get all announcements
 const getAllAnnouncements = async(req, res) => {
+        
+    const page = parseInt(req.query.page) || 1;
+    const pageSize = parseInt(req.query.pageSize) || 12;
+    const skip = (page - 1) * pageSize;
+
+    const {search} = req.query
+
     let queryObject = {};
 
     if(req.query.category){
         queryObject.categories = req.query.category
     }
 
-    const announcements = await Announcement.find(queryObject).sort({createdAt: -1})
+    if(req.query.isArchived) {
+        queryObject.isArchived = req.query.isArchived === 'true'
+    }
 
-    res.status(StatusCodes.OK).json({announcements})
-}
-
-
-// search announcements
-const searchAnnouncements = async(req, res) => {
-    //insert pagination
-    const page = parseInt(req.query.page) || 1;
-    const pageSize = parseInt(req.query.pageSize) || 12;
-    const skip = (page - 1) * pageSize;
-
-     const {search} = req.query
-     const queryObject = {}
- 
-     if(search){
+    if(search){
         queryObject.$or = [
             { anncmnt_title: { $regex: search, $options: 'i' } },
             { anncmnt_description: { $regex: search, $options: 'i' } },
         ];
-     }
+    }
  
-    let announcement = await Announcement.find(queryObject)
-    .collation({ locale: 'en', strength: 2 })
-    .sort('prod_name')
+
+    const announcements = await Announcement.find(queryObject)
+    .sort({createdAt: -1})
     .skip(skip)
     .limit(pageSize)
-    .exec()
 
-    let searchTotal = await Announcement.find(queryObject)
- 
-     res.status(StatusCodes.OK).json({announcement, count: searchTotal.length})
+
+    const overAllAnnouncement = await Announcement.countDocuments()
+    const totalAnnouncement = await Announcement.countDocuments(queryObject);
+    const totalPages = Math.ceil(totalAnnouncement / pageSize);
+
+    res.status(StatusCodes.OK).json({announcements, overAllAnnouncement, totalAnnouncement, totalPages})
 }
+
+
+const archiveAnnouncement = async(req, res) => {
+  
+
+    const announcement = await Announcement.findById(req.params.id);
+
+    if (!announcement) {
+        throw new CustomError.NotFoundError('No announcement found')
+    }
+
+    const updateAnnouncement = await Announcement.findByIdAndUpdate(
+        req.params.id,
+        req.body,
+        {new:true}
+    )
+
+    if(updateAnnouncement.isArchived === true) {
+        req.logAction = 'Archived Announcement';
+        req.action = 'archived'
+    } 
+
+    if(updateAnnouncement.isArchived === false) {
+        req.logAction = 'Unarchived Announcement';
+        req.action = 'unarchived'
+    }
+
+    
+    await AdminLog.create({
+        user: req.user.full_name,
+        action: `${req.user.full_name} ${req.logAction}`,
+        content: `Announcement: ${announcement.anncmnt_title} has been ${req.action}`
+    })
+
+
+    res.status(StatusCodes.OK).json({updateAnnouncement})
+}
+
 
 const addAnnouncement = async (req, res) => {
     req.logAction = 'Add Announcement';
@@ -78,7 +123,7 @@ const addAnnouncement = async (req, res) => {
   
     // Create a notification
     const notification = await Notification.create({
-      title: 'New Announcement',
+      title: `${req.user.full_name} Posted New Announcement`,
       message: `${anncmnt_title}`,
       profile: `${user.profile_image}`,
       announcement_id: announcement._id,
@@ -214,11 +259,12 @@ const uploadUpdateAnnImage = async (req, res) => {
 
 
 module.exports = {
+    getSingleAnnouncement,
     getAllAnnouncements,
-    searchAnnouncements,
     addAnnouncement,
     updateAnnouncement,
     deleteAnnouncement,
+    archiveAnnouncement,
     uploadAnnImage,
     uploadUpdateAnnImage
 }

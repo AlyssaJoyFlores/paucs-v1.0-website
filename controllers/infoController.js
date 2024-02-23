@@ -1,4 +1,4 @@
-const {  About, SizeChart, Terms, Privacy } = require('../models/infoModel')
+const {  About, SizeChart, Terms, Privacy, HelpSupport } = require('../models/infoModel')
 const CustomError = require('../errors')
 const {StatusCodes} = require('http-status-codes')
 const {checkPermissions} = require('../utils')
@@ -69,7 +69,7 @@ const getSizeChart = async(req, res) => {
 
 
 const createSizeChart = async(req, res) => {
-    const {chart_title, chart_image} = req.body
+    const {chart_title, chart_image, sizes} = req.body
 
     
     if(!chart_title || !chart_image) {
@@ -79,6 +79,7 @@ const createSizeChart = async(req, res) => {
     const sizeChart = await SizeChart.create({
         chart_title,
         chart_image,
+        sizes,
         user: req.user.userId
     })
 
@@ -288,6 +289,61 @@ const deletePrivacy  = async(req, res) => {
     res.status(StatusCodes.OK).json({msg: 'delete privacy', privacy})
 }
 
+//================================================================
+const getHelpSupport = async(req, res) => {
+    const helpSupport = await HelpSupport.find({})
+    res.status(StatusCodes.OK).json({msg: 'Get Help Support Page', helpSupport})
+}
+
+
+const createHelpSupport = async(req, res) => {
+    const {title, steps} = req.body
+
+    
+    if(!title || !steps) {
+        throw new CustomError.BadRequestError('All fields are required')
+    }
+
+    const helpSupport = await HelpSupport.create({
+        title,
+        steps
+    })
+
+    res.status(StatusCodes.CREATED).json({helpSupport})
+}
+
+const updateHelpSupport = async(req, res) => {
+    const helpSupport = await HelpSupport.findById(req.params.id)
+
+    if(!helpSupport){
+        throw new CustomError.NotFoundError('Help Support Not Found')
+    }
+
+    const updateHelpSupport = await HelpSupport.findByIdAndUpdate(
+        req.params.id,
+        req.body,
+        {new:true}
+    )
+
+      
+    res.status(StatusCodes.OK).json({updateHelpSupport})
+}
+
+
+const deleteHelpSupport = async(req, res) => {
+    const helpSupport = await HelpSupport.findById(req.params.id)
+
+    if(!helpSupport){
+        throw new CustomError.NotFoundError('Help Support Not Found')
+    }
+
+    await HelpSupport.deleteOne({_id:helpSupport})
+
+    res.status(StatusCodes.OK).json({msg: 'delete about', helpSupport})
+}
+
+
+
 
 module.exports = {
     getAbout,
@@ -307,5 +363,9 @@ module.exports = {
     getPrivacy,
     createPrivacy,
     updatePrivacy,
-    deletePrivacy
+    deletePrivacy,
+    getHelpSupport,
+    createHelpSupport,
+    updateHelpSupport,
+    deleteHelpSupport
 }

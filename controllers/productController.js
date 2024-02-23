@@ -9,26 +9,75 @@ const { StatusCodes } = require('http-status-codes');
 const CustomError = require('../errors');
 
 
+const archiveProduct = async(req, res) => {
+  
+  const product = await Product.findById(req.params.id);
+
+  if (!product) {
+      throw new CustomError.NotFoundError('No product found')
+  }
+
+  const updateProduct = await Product.findByIdAndUpdate(
+    req.params.id,
+    req.body,
+    {new:true}
+  )
+
+  if(updateProduct.isArchived === true) {
+    req.logAction = 'Archived Product';
+    req.action = 'archived'
+  } 
+
+  if(updateProduct.isArchived === false) {
+    req.logAction = 'Unarchived Product';
+    req.action = 'unarchived'
+  }
+
+  
+  await AdminLog.create({
+    user: req.user.full_name,
+    action: `${req.user.full_name} ${req.logAction}`,
+    content: `Product: ${product.prod_name} has been ${req.action}`
+  })
+
+
+  res.status(StatusCodes.OK).json({updateProduct})
+}
+
+
+
 
 const getAllProductsUser = async (req, res) => {
   const userCollegeDept = req.params.college_dept;
-  const prodTypeQueryParam = req.query.type;
+  const isArchivedParam = req.query.isArchived;
 
+  const {prod_type} = req.query
 
+  const searchQuery = req.query.search;
 
   const page = parseInt(req.query.page) || 1;
   const pageSize = parseInt(req.query.pageSize) || 12;
   const skip = (page - 1) * pageSize;
+  
+  
 
   const query = {
     $or: [
       { prod_department: userCollegeDept },
-      { prod_department: 'PHINMA AU SOUTH' }
+      { prod_department: 'PHINMA AU SOUTH' },
     ]
   };
 
-  if (prodTypeQueryParam) {
-    query.prod_type = prodTypeQueryParam;
+  if(isArchivedParam) {
+    query.isArchived = req.query.isArchived === 'true'
+  }
+
+  if (prod_type) {
+    query.prod_type = prod_type;
+  }
+
+  if (searchQuery) {
+    query.prod_name = { $regex: searchQuery, $options: 'i' };
   }
 
   const getProducts = await Product.find(query)
@@ -60,17 +109,31 @@ const getAllProductsAdmin = async (req, res) => {
     const page = parseInt(req.query.page) || 1;
     const pageSize = parseInt(req.query.pageSize) || 12;
     const skip = (page - 1) * pageSize;
+    const searchQuery = req.query.search;
+
+    let queryObject = {};
     
-    const getProducts = await Product.find()
+    if (searchQuery) {
+      queryObject.prod_name = { $regex: searchQuery, $options: 'i'};
+    }
+    
+
+    if(req.query.isArchived) {
+      queryObject.isArchived = req.query.isArchived === 'true'
+    }
+
+    
+    const getProducts = await Product.find(queryObject)
       .collation({ locale: 'en', strength: 2 })
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(pageSize)
       .exec();
-  
+
+         
     const totalProductCount = await Product.countDocuments();
-  
-    const totalPages = Math.ceil(totalProductCount / pageSize);
+    const totalByQuery = await Product.countDocuments(queryObject)
+    const totalPages = Math.ceil(totalByQuery / pageSize);  
   
     const productsWithTotalCtgyStocksAndSales = await Promise.all(
       getProducts.map(async (product) => {
@@ -111,6 +174,7 @@ const getAllProductsAdmin = async (req, res) => {
       msg: "get all products",
       getProducts: productsWithTotalCtgyStocksAndSales,
       count: totalProductCount,
+      totalByQuery,
       totalPages,
     });
   };
@@ -188,55 +252,6 @@ const getAllProductsAdmin = async (req, res) => {
   
 
 
-const searchProduct = async(req, res) => {
-     //insert pagination
-    const page = parseInt(req.query.page) || 1;
-    const pageSize = parseInt(req.query.pageSize) || 12;
-    const skip = (page - 1) * pageSize;
-
-    
-    const {search} = req.query
-    const queryObject = {}
-
-    const userCollegeDept = req.params.college_dept
-
-    // Include 'PHINMA AU SOUTH' and the user's college department in the query
-    const departmentQuery = {
-      $or: [
-        { prod_department: userCollegeDept },
-        { prod_department: 'PHINMA AU SOUTH' }
-      ]
-    };
-
-    if(search){
-      queryObject.prod_name = {$regex: search, $options: 'i'};
-    }
-
- 
-
-    // Merge the search query and department query
-    const finalQuery = { ...queryObject, ...departmentQuery };
-
-    let products = await Product.find(finalQuery)
-    .collation({ locale: 'en', strength: 2 })
-    .sort('prod_name')
-    .skip(skip)
-    .limit(pageSize)
-    .exec()
-
-    let searchTotal = await Product.find(finalQuery)
-
-   
-    if(searchTotal.length === 0) {
-      throw new CustomError.NotFoundError(`No results found for search: ${search}`)
-    }
-
-
-    res.status(StatusCodes.OK).json({products, countSearch: searchTotal.length})
-}
-
-
-
 const getSingleProduct = async(req, res) => {
     const product = await Product.findById(req.params.id).populate('reviews')
     if(!product){
@@ -280,7 +295,7 @@ const addProduct = async(req, res)=> {
 
     // Create a notification
   const notification = await Notification.create({
-    title: 'New Product',
+    title: `${req.user.full_name} Add New Product`,
     message: `${prod_name} has been added.`,
     product_id: product._id,
     profile: `${user.profile_image}`,
@@ -439,8 +454,8 @@ const updateProdImage = async(req, res)=> {
 module.exports = {
   getAllProductsAdmin,
   getAllProductsUser,
+  archiveProduct,
   productLanding,
-  searchProduct,
   getSingleProduct,
   addProduct,
   updateProduct,

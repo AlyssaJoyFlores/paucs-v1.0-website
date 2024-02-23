@@ -22,11 +22,14 @@ const {
     resetPassword,
     addConfigureSettings,
     validateConfigureSettings,
-    getConfigureQuestion
+    getConfigureQuestion,
+    manageDevices
 } = require('../controllers/authController')
 
 router.route('/register').post(apiLimiter, register)
 router.route('/login').post(apiLimiter, login)
+router.route('/manage-device').get(manageDevices)
+
 router.route('/logout').delete(authenticateUser, logout)
 router.route('/verify-email').post(verifyEmail)
 router.route('/forgot-password').post(forgotPassword);

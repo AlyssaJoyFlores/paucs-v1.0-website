@@ -86,6 +86,10 @@ const usersSchema = new mongoose.Schema({
         enum: ['unrestricted', 'restricted'],
         default: 'unrestricted'
     },
+    restrictionStartTime: {
+        type: Date,
+        default: null,
+    },
     verificationToken: String,
     isVerified: {
         type: Boolean,
@@ -119,7 +123,10 @@ const usersSchema = new mongoose.Schema({
     isConfiguredAnswered: {
         type: Boolean,
         default: false
-    }
+    },
+    allowedDevices: [{type: String}],
+    blockedDevices: [{ type: String }],
+    deviceChanges: { type: Number, default: 0 }
 },{
     timestamps: true
 })

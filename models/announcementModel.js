@@ -33,6 +33,10 @@ const announcementSchema = new mongoose.Schema({
         type: mongoose.Types.ObjectId,
         ref: 'User',
         required: true
+    },
+    isArchived: {
+        type: Boolean,
+        default: false
     }
 
 }, {

@@ -101,7 +101,6 @@ const authenticateUser = async (req, res, next) => {
 };
 
 
-
 const authorizePermissions = (...roles) => {
     return (req, res, next) => {
         const userRoles = Array.isArray(req.user.role) ? req.user.role : [req.user.role];
@@ -111,6 +110,7 @@ const authorizePermissions = (...roles) => {
         next();
     };
 };
+
 
 
 

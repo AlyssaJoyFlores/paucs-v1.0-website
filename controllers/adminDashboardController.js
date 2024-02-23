@@ -52,6 +52,7 @@ const toReceiveOrders = async (req, res) => {
 
   // Extract relevant information from each completed order
   const ordersInfo = toReceive.map(order => ({
+    id: order.id,
     userFullName: order.userInfo[0].full_name,
     collegeDepartment: order.userInfo[0].college_dept,
     receivedDate: order.receivedDate,
@@ -105,6 +106,7 @@ const mostSellingProducts = async (req, res) => {
 
     // Extract and format the desired fields for the response
     const formattedResponse = mostSellingProducts.map(product => ({
+      id: product.id,
       prod_name: product.prod_name,
       image: product.image,
       averageRating: product.averageRating,

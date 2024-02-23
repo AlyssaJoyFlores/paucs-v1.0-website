@@ -14,6 +14,12 @@ const PolicySchema = new mongoose.Schema({
         type: mongoose.Types.ObjectId,
         ref: 'User',
         required: true
+    },
+    profile: {
+        type: String
+    },
+    policy_publisher: {
+        type: String
     }
 },{timestamps: true})
 

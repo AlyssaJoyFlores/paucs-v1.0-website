@@ -5,6 +5,17 @@ const AdminLog = require('../models/adminLogModel')
 const CustomError = require('../errors')
 const {StatusCodes} = require('http-status-codes')
 
+
+const getSinglePolicy = async(req, res) => {
+    const policy = await Policy.findOne({_id: req.params.id})
+    if (!policy) {
+        throw new CustomError.NotFoundError(`No Policy found with id : ${req.params.id}`);
+    }
+
+    res.status(StatusCodes.OK).json({msg: 'get single policy', policy})
+}
+
+
 const createPolicy = async(req, res) => {
     req.logAction = 'Create Policy';
  
@@ -18,12 +29,14 @@ const createPolicy = async(req, res) => {
     const policy = await Policy.create({
         steps,
         description,
-        user: req.user.userId
+        user: req.user.userId,
+        profile: req.user.profile_image,
+        policy_publisher: req.user.full_name
     })
 
       // Create a notification
     const notification = await Notification.create({
-        title: 'New Policy',
+        title: `${req.user.full_name} Posted New Policy`,
         message: `${steps} has been added.`,
         policy_id: policy._id,
         profile: `${req.user.profile_image}`,
@@ -110,6 +123,7 @@ const deletePolicy = async(req, res) => {
 
 
 module.exports = {
+    getSinglePolicy,
     createPolicy,
     getAllPolicy,
     updatePolicy,

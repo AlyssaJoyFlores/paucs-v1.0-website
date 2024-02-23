@@ -7,7 +7,7 @@ const createTokenUser = (user) => {
         school_email: user.school_email,
         school_campus: user.school_campus,
         college_dept: user.college_dept,
-        full_name: user.full_name,
+        // full_name: user.full_name,
         course: user.course,
         year: user.year,
         section: user.section,
@@ -24,9 +24,15 @@ const createTokenUser = (user) => {
         freeUnifStatus: user.freeUnifStatus,
         configuredSettings: user.configuredSettings,
         configureQuestion: user.configureQuestion,
-        isConfiguredAnswered: user.isConfiguredAnswered
+        isConfiguredAnswered: user.isConfiguredAnswered,
+        blockedDevices: user.blockedDevices,
+        allowedDevices: user.allowedDevices,
+        deviceChanges: user.deviceChanges,
+        restrictionStartTime: user.restrictionStartTime
+   
     }
 }
+
 
 
 module.exports = createTokenUser

@@ -20,7 +20,7 @@ const getAllInventory = async (req, res) => {
       for (const product of allProducts) {
         // Find completed orders for the specific product
         const completedOrders = await CheckOut.find({
-          status: 'completed',
+          //status: 'completed',
           'orders.orderItems.product': product._id,
         });
   

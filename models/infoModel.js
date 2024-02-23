@@ -16,8 +16,26 @@ const SizeChartSchema = new mongoose.Schema({
     },
     chart_image: {
         type: String
-    }
+    },
+    sizes: [{
+        size_name: String,
+        cm: Number,
+        inch: Number
+    }]
+
 },{timestamps: true})
+
+
+const HelpSupportSchema = new mongoose.Schema({
+    title: {
+        type: String,
+    },
+    steps: [{
+        steps_num: Number,
+        steps_title: String,
+        steps_desc: String 
+    }]
+}, {timestamps: true})
 
 
 const TermsSchema = new mongoose.Schema({
@@ -45,10 +63,12 @@ const About = mongoose.model('About', AboutSchema)
 const SizeChart = mongoose.model('SizeChart', SizeChartSchema)
 const Terms = mongoose.model('Terms', TermsSchema)
 const Privacy = mongoose.model('Privacy', PrivacySchema)
+const HelpSupport = mongoose.model('HelpSupport', HelpSupportSchema)
 
 module.exports = {
     About,
     SizeChart,
     Terms,
-    Privacy
+    Privacy,
+    HelpSupport
 }

@@ -10,8 +10,8 @@ const {authenticateUser, authorizePermissions} = require('../middleware/authenti
 const {
     getAllProductsAdmin,
     getAllProductsUser,
+    archiveProduct,
     productLanding,
-    searchProduct,
     getSingleProduct,
     addProduct,
     updateProduct,
@@ -34,10 +34,12 @@ router.route('/addProduct').post([authenticateUser, authorizePermissions('admin'
 
 
 router.route('/getUserProducts/:college_dept').get(getAllProductsUser);
-router.route('/productSearch/:college_dept').get(authenticateUser, searchProduct)
 router.route('/getSingleProduct/:id').get(getSingleProduct);
 router.route('/updateProdImage/:id').post([authenticateUser, authorizePermissions('admin')],updateProdImage);
+
 router.route('/updateProduct/:id').patch([authenticateUser, authorizePermissions('admin')], updateProduct);
+router.route('/archivedProduct/:id').patch([authenticateUser, authorizePermissions('admin')], archiveProduct);
+
 router.route('/deleteProduct/:id').delete([authenticateUser, authorizePermissions('admin')], deleteProduct);
 
 
