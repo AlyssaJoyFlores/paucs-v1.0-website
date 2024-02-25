@@ -392,7 +392,7 @@ const updateOrder = async (req, res) => {
         );
 
         if (req.body.status === 'to acquire'){
-            // const origin = 'http://localhost:3000'
+           // const origin = 'http://localhost:3000'
             const origin = 'https://paucs.store'
       
             //sending email
