@@ -13,6 +13,15 @@ const apiLimiter = rateLimiter({
 })
 
 
+const clickCount = rateLimiter({
+    windowMs: 10 * 60 * 1000, //1 min
+    max: 3,
+    message: {
+        msg: "Too many request. Please Try again later"
+    }
+})
+
+
 const {
     register,
     verifyEmail,
@@ -28,7 +37,7 @@ const {
 
 router.route('/register').post(apiLimiter, register)
 router.route('/login').post(apiLimiter, login)
-router.route('/manage-device').get(manageDevices)
+router.route('/manage-device').get(clickCount, manageDevices)
 
 router.route('/logout').delete(authenticateUser, logout)
 router.route('/verify-email').post(verifyEmail)

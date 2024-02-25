@@ -420,8 +420,8 @@ const registerUser = async (req, res) => {
       throw new CustomError.BadRequestError('Invalid role specified');
   }
 
-  const origin = 'http://localhost:3000'
-  // const origin = 'https://paucs.store'
+  // const origin = 'http://localhost:3000'
+  const origin = 'https://paucs.store'
 
   //after creating the user now it will validate/confirm email
   //sending email

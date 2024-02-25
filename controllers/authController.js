@@ -49,7 +49,11 @@ const register = async (req, res) => {
     const firstAccount = await User.countDocuments({}) === 0;
     const role = firstAccount? 'admin' : 'student';
 
-    const userAgent = req.headers['user-agent'];
+    const userAgentDevice = {
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent']
+    };
+
 
     //verification for email
     // this is the token for confirmation email
@@ -74,7 +78,7 @@ const register = async (req, res) => {
             role: ['admin'],
             status,
             verificationToken,
-            allowedDevices: [userAgent]
+            allowedDevices: [userAgentDevice],
         });
     } else {
         // If the role is student, create a student user
@@ -98,7 +102,7 @@ const register = async (req, res) => {
             status,
             freeUnifStatus,
             verificationToken,
-            allowedDevices: [userAgent]
+            allowedDevices: [userAgentDevice],
         });
     }
 
@@ -149,22 +153,22 @@ const login = async (req, res) => {
     const { school_id, password, recaptchaToken } = req.body;
 
     //Verify reCAPTCHA token
-    const secretKey = process.env.CAPTCHA_KEY;
+    // const secretKey = process.env.CAPTCHA_KEY;
 
-    if (!secretKey) {
-        throw new CustomError.BadRequestError('reCAPTCHA secret key is missing or invalid');
-    }
+    // if (!secretKey) {
+    //     throw new CustomError.BadRequestError('reCAPTCHA secret key is missing or invalid');
+    // }
 
-    if (!recaptchaToken) {
-        throw new CustomError.BadRequestError('reCAPTCHA secret key is missing or invalid');
-    }
+    // if (!recaptchaToken) {
+    //     throw new CustomError.BadRequestError('reCAPTCHA secret key is missing or invalid');
+    // }
   
-    const recaptchaResponse = await axios.post( `https://www.google.com/recaptcha/api/siteverify?secret=${secretKey}&response=${recaptchaToken}`)
+    // const recaptchaResponse = await axios.post( `https://www.google.com/recaptcha/api/siteverify?secret=${secretKey}&response=${recaptchaToken}`)
 
-    if (!recaptchaResponse.data.success) {
-        const errorDetails = JSON.stringify(recaptchaResponse.data);
-        throw new CustomError.BadRequestError('reCAPTCHA verification failed')
-    }
+    // if (!recaptchaResponse.data.success) {
+    //     const errorDetails = JSON.stringify(recaptchaResponse.data);
+    //     throw new CustomError.BadRequestError('reCAPTCHA verification failed')
+    // }
     
 
     // Check if email and password exist in db
@@ -224,18 +228,43 @@ const login = async (req, res) => {
     }
 
 
-    const userAgentDevice = req.headers['user-agent'];
+    // const userAgentDevice = req.headers['user-agent'];
 
-    if (user.blockedDevices.includes(userAgentDevice)) {
+    // if (user.blockedDevices.includes(userAgentDevice)) {
+    //     throw new CustomError.UnauthorizedError('Your device has been blocked. Please contact support for assistance.');
+    // }
+    
+
+    // if (!user.allowedDevices.includes(userAgentDevice)) {
+    //     sendLoginAttemptNotification(user, req.ip, userAgentDevice);
+    //     throw new CustomError.UnauthenticatedError('Unrecognized device, please check your email to confirm it was you');
+    // }
+    
+
+    const userAgentDevice = {
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent']
+    };
+    
+    // Check if the user's device is in the blocked devices
+    const isBlocked = user.blockedDevices.some(device => 
+        device.ipAddress === userAgentDevice.ipAddress && device.userAgent === userAgentDevice.userAgent
+    );
+    
+    if (isBlocked) {
         throw new CustomError.UnauthorizedError('Your device has been blocked. Please contact support for assistance.');
     }
     
-
-    if (!user.allowedDevices.includes(userAgentDevice)) {
-        sendLoginAttemptNotification(user, req.ip, userAgentDevice);
+    // Check if the user's device is in the allowed devices
+    const isAllowed = user.allowedDevices.some(device => 
+        device.ipAddress === userAgentDevice.ipAddress && device.userAgent === userAgentDevice.userAgent
+    );
+    
+    if (!isAllowed) {
+        sendLoginAttemptNotification(user, req.ip, userAgentDevice.userAgent);
         throw new CustomError.UnauthenticatedError('Unrecognized device, please check your email to confirm it was you');
     }
-    
+
   
     // // Check for existing active sessions
     // const activeSessions = await Token.find({ user: user._id, isValid: true });
@@ -288,14 +317,15 @@ const login = async (req, res) => {
 
 const sendLoginAttemptNotification = async(user, ipAddress, deviceLog) => {
   
-    // const origin = 'http://localhost:3000'
-    const origin = 'https://paucs.store'
+    const origin = 'http://localhost:3000'
+    //const origin = 'https://paucs.store'
 
     await sendLoginAttempEmail({
         name: user.full_name,
         school_email: user.school_email,
         dateLog: new Date(),
         device: deviceLog,
+        ipAdd: ipAddress,
         school_id: user.school_id,
         origin
       
@@ -306,8 +336,61 @@ const sendLoginAttemptNotification = async(user, ipAddress, deviceLog) => {
 
 
 
-const manageDevices  = async (req, res) => {
-    const { action, device, school_id } = req.query;
+// const manageDevices  = async (req, res) => {
+//     const { action, device, school_id } = req.query;
+
+//     const user = await User.findOne({ school_id });
+
+//     if (!user) {
+//         return res.status(404).json({ message: 'User not found' });
+//     }
+
+//     if (user.deviceChanges >= 30) {
+//         return res.status(400).json({ message: 'You have reached the limit of device changes.' });
+//     }
+
+//     if (action === 'allow') {
+      
+//         if (user.allowedDevices.includes(device)) {
+//             return res.status(400).json({ message: 'Device already allowed for this user' });
+//         }
+
+//         if (user.blockedDevices.includes(device)) {
+//             user.blockedDevices.pull(device);
+//             user.deviceChanges++;
+//         }
+
+//         user.allowedDevices.push(device);
+//     } else if (action === 'block') {
+
+//         if (user.blockedDevices.includes(device)) {
+//             return res.status(400).json({ message: 'Device already blocked for this user' });
+//         }
+
+//         if (user.allowedDevices.includes(device)) {
+//             user.allowedDevices.pull(device);
+//             user.deviceChanges++;
+//         }
+    
+//         user.blockedDevices.push(device);
+//     } else {
+//         return res.status(400).json({ message: 'Invalid action. Please specify either "allow" or "block".' });
+//     }
+
+//     await user.save();
+
+        
+//     const tokenUser = createTokenUser(user);
+//     attachedCookiesToResponse({ res, user: tokenUser });
+
+
+//     return res.status(200).json({ message: `Device ${action}ed successfully` });
+// };
+
+
+
+const manageDevices = async (req, res) => {
+    const { action, device, school_id, ipAddress } = req.query;
 
     const user = await User.findOne({ school_id });
 
@@ -315,47 +398,57 @@ const manageDevices  = async (req, res) => {
         return res.status(404).json({ message: 'User not found' });
     }
 
-    if (user.deviceChanges >= 30) {
-        return res.status(400).json({ message: 'You have reached the limit of device changes.' });
-    }
+    const userAgentDevice = {
+        ipAddress,
+        userAgent: device
+    };
 
     if (action === 'allow') {
-      
-        if (user.allowedDevices.includes(device)) {
+        // Check if the device is already allowed for this user
+        const isDeviceAllowed = user.allowedDevices.some(dev =>
+            dev.ipAddress === userAgentDevice.ipAddress && dev.userAgent === userAgentDevice.userAgent
+        );
+        if (isDeviceAllowed) {
             return res.status(400).json({ message: 'Device already allowed for this user' });
         }
 
-        if (user.blockedDevices.includes(device)) {
-            user.blockedDevices.pull(device);
-            user.deviceChanges++;
-        }
+        // Remove the device from blocked devices if it's there
+        user.blockedDevices = user.blockedDevices.filter(dev =>
+            dev.ipAddress !== userAgentDevice.ipAddress || dev.userAgent !== userAgentDevice.userAgent
+        );
 
-        user.allowedDevices.push(device);
+        // Add the device to allowed devices
+        user.allowedDevices.push(userAgentDevice);
     } else if (action === 'block') {
-
-        if (user.blockedDevices.includes(device)) {
+        // Check if the device is already blocked for this user
+        const isDeviceBlocked = user.blockedDevices.some(dev =>
+            dev.ipAddress === userAgentDevice.ipAddress && dev.userAgent === userAgentDevice.userAgent
+        );
+        if (isDeviceBlocked) {
             return res.status(400).json({ message: 'Device already blocked for this user' });
         }
 
-        if (user.allowedDevices.includes(device)) {
-            user.allowedDevices.pull(device);
-            user.deviceChanges++;
-        }
-    
-        user.blockedDevices.push(device);
+        // Remove the device from allowed devices if it's there
+        user.allowedDevices = user.allowedDevices.filter(dev =>
+            dev.ipAddress !== userAgentDevice.ipAddress || dev.userAgent !== userAgentDevice.userAgent
+        );
+
+        // Add the device to blocked devices
+        user.blockedDevices.push(userAgentDevice);
     } else {
         return res.status(400).json({ message: 'Invalid action. Please specify either "allow" or "block".' });
     }
 
+    // Save the user changes
     await user.save();
 
-        
     const tokenUser = createTokenUser(user);
     attachedCookiesToResponse({ res, user: tokenUser });
 
-
     return res.status(200).json({ message: `Device ${action}ed successfully` });
 };
+
+
 
 
 //======================================
