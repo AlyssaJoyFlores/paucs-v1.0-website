@@ -49,7 +49,6 @@ const register = async (req, res) => {
     const firstAccount = await User.countDocuments({}) === 0;
     const role = firstAccount? 'admin' : 'student';
 
-    const userAgent = req.headers['user-agent'];
 
     //verification for email
     // this is the token for confirmation email
@@ -74,7 +73,6 @@ const register = async (req, res) => {
             role: ['admin'],
             status,
             verificationToken,
-            allowedDevices: [userAgent]
         });
     } else {
         // If the role is student, create a student user
@@ -224,18 +222,45 @@ const login = async (req, res) => {
     }
 
 
-    const userAgentDevice = req.headers['user-agent'];
-    const userIPAddress = req.ip
+    // const userAgentDevice = req.headers['user-agent'];
+    // const userIPAddress = req.ip
 
-    if (user.blockedDevices.includes(userAgentDevice)) {
+    // if (user.blockedDevices.includes(userAgentDevice)) {
+    //     throw new CustomError.UnauthorizedError('Your device has been blocked. Please contact support for assistance.');
+    // }
+    
+
+    // if (!user.allowedDevices.includes(userAgentDevice) || !user.ipAddress.includes(userIPAddress)) {
+    //     sendLoginAttemptNotification(user, userIPAddress, userAgentDevice);
+    //     throw new CustomError.UnauthenticatedError('Unrecognized device, please check your email to confirm it was you');
+    // }
+
+
+    const userAgentDevice = {
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent']
+    };
+    
+    // Check if the user's device is in the blocked devices
+    const isBlocked = user.blockedDevices.some(device => 
+        device.ipAddress === userAgentDevice.ipAddress && device.userAgent === userAgentDevice.userAgent
+    );
+    
+    if (isBlocked) {
         throw new CustomError.UnauthorizedError('Your device has been blocked. Please contact support for assistance.');
     }
     
-
-    if (!user.allowedDevices.includes(userAgentDevice) || !user.ipAddress.includes(userIPAddress)) {
-        sendLoginAttemptNotification(user, userIPAddress, userAgentDevice);
+    // Check if the user's device is in the allowed devices
+    const isAllowed = user.allowedDevices.some(device => 
+        device.ipAddress === userAgentDevice.ipAddress && device.userAgent === userAgentDevice.userAgent
+    );
+    
+    if (!isAllowed) {
+        sendLoginAttemptNotification(user, userAgentDevice.ipAddress, userAgentDevice.userAgent);
         throw new CustomError.UnauthenticatedError('Unrecognized device, please check your email to confirm it was you');
     }
+    
+
     
   
     // // Check for existing active sessions
@@ -308,62 +333,8 @@ const sendLoginAttemptNotification = async(user, ipAddress, deviceLog) => {
 
 
 
-// const manageDevices  = async (req, res) => {
-//     const { action, device, school_id } = req.query;
-
-//     const user = await User.findOne({ school_id });
-
-//     if (!user) {
-//         return res.status(404).json({ message: 'User not found' });
-//     }
-
-//     if (user.deviceChanges >= 30) {
-//         return res.status(400).json({ message: 'You have reached the limit of device changes.' });
-//     }
-
-//     if (action === 'allow') {
-      
-//         if (user.allowedDevices.includes(device)) {
-//             return res.status(400).json({ message: 'Device already allowed for this user' });
-//         }
-
-//         if (user.blockedDevices.includes(device)) {
-//             user.blockedDevices.pull(device);
-//             user.deviceChanges++;
-//         }
-
-//         user.allowedDevices.push(device);
-//     } else if (action === 'block') {
-
-//         if (user.blockedDevices.includes(device)) {
-//             return res.status(400).json({ message: 'Device already blocked for this user' });
-//         }
-
-//         if (user.allowedDevices.includes(device)) {
-//             user.allowedDevices.pull(device);
-//             user.deviceChanges++;
-//         }
-    
-//         user.blockedDevices.push(device);
-//     } else {
-//         return res.status(400).json({ message: 'Invalid action. Please specify either "allow" or "block".' });
-//     }
-
-//     await user.save();
-
-        
-//     const tokenUser = createTokenUser(user);
-//     attachedCookiesToResponse({ res, user: tokenUser });
-
-
-//     return res.status(200).json({ message: `Device ${action}ed successfully` });
-// };
-
-
-
-
-const manageDevices  = async (req, res) => {
-    const { action, device, ip, school_id } = req.query;
+const manageDevices = async (req, res) => {
+    const { action, device, ip, school_id} = req.query;
 
     const user = await User.findOne({ school_id });
 
@@ -371,43 +342,61 @@ const manageDevices  = async (req, res) => {
         return res.status(404).json({ message: 'User not found' });
     }
 
-   
+    const userAgentDevice = {
+        ipAddress: ip,
+        userAgent: device
+    };
+
     if (action === 'allow') {
-      
-        if (user.allowedDevices.includes(device)) {
+        
+        const isDeviceAllowed = user.allowedDevices.some(device =>
+            device.ipAddress === userAgentDevice.ipAddress && device.userAgent === userAgentDevice.userAgent
+        );
+        
+        if (isDeviceAllowed) {
             return res.status(400).json({ message: 'Device already allowed for this user' });
         }
 
-        if (user.blockedDevices.includes(device)) {
-            user.blockedDevices.pull(device);
-        }
+       
+        user.blockedDevices = user.blockedDevices.filter(device =>
+            device.ipAddress !== userAgentDevice.ipAddress || device.userAgent !== userAgentDevice.userAgent
+        );
 
-        user.allowedDevices.push(device);
-        user.ipAddress.push(ip);
+      
+        user.allowedDevices.push(userAgentDevice);
+
     } else if (action === 'block') {
+       
+        const isDeviceBlocked = user.blockedDevices.some(device =>
+            device.ipAddress === userAgentDevice.ipAddress && device.userAgent === userAgentDevice.userAgent
+        );
 
-        if (user.blockedDevices.includes(device)) {
+        if (isDeviceBlocked) {
             return res.status(400).json({ message: 'Device already blocked for this user' });
         }
 
-        if (user.allowedDevices.includes(device)) {
-            user.allowedDevices.pull(device);
-        }
-    
-        user.blockedDevices.push(device);
+     
+        user.allowedDevices = user.allowedDevices.filter(dev =>
+            dev.ipAddress !== userAgentDevice.ipAddress || dev.userAgent !== userAgentDevice.userAgent
+        );
+
+       
+        user.blockedDevices.push(userAgentDevice);
+
     } else {
         return res.status(400).json({ message: 'Invalid action. Please specify either "allow" or "block".' });
     }
 
+
     await user.save();
 
-        
     const tokenUser = createTokenUser(user);
     attachedCookiesToResponse({ res, user: tokenUser });
 
-
     return res.status(200).json({ message: `Device ${action}ed successfully` });
 };
+
+
 
 
 

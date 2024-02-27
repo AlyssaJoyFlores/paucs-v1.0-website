@@ -27,7 +27,6 @@ const createTokenUser = (user) => {
         isConfiguredAnswered: user.isConfiguredAnswered,
         blockedDevices: user.blockedDevices,
         allowedDevices: user.allowedDevices,
-        deviceChanges: user.deviceChanges,
         restrictionStartTime: user.restrictionStartTime
    
     }

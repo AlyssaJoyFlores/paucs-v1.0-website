@@ -3,7 +3,7 @@ const sendEmail = require('./sendEmail')
 // this is the body for the email
 // origin will be done in the front-end/client
 
-const sendLoginAttempEmail = async({name, school_email, token, origin, dateLog, device, school_id, ip}) => {
+const sendLoginAttempEmail = async({name, school_email, token, origin, dateLog, device, ip, school_id}) => {
     //const resetLink = `${origin}/resetpass?token=${token}&email=${school_email}`
     const blockUrl = `${origin}/api/auth/manage-device?action=block&device=${encodeURIComponent(device)}&ip=${encodeURIComponent(ip)}&school_id=${school_id}`;
     const allow = `${origin}/api/auth/manage-device?action=allow&device=${encodeURIComponent(device)}&ip=${encodeURIComponent(ip)}&school_id=${school_id}`;

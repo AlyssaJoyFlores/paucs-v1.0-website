@@ -11,6 +11,11 @@ const configureSchema = new mongoose.Schema({
     }
 })
 
+deviceSchema = new mongoose.Schema({
+    ipAddress: { type: String}, // Adding IP address property
+    userAgent: { type: String}
+});
+
 const usersSchema = new mongoose.Schema({
     school_id: {
         type: String,
@@ -124,9 +129,8 @@ const usersSchema = new mongoose.Schema({
         type: Boolean,
         default: false
     },
-    allowedDevices: [{type: String}],
-    blockedDevices: [{ type: String }],
-    ipAddress: [{ type: String }],
+    allowedDevices: [deviceSchema],
+    blockedDevices: [deviceSchema],
 },{
     timestamps: true
 })

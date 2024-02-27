@@ -113,128 +113,128 @@ const getSingleUser = async(req, res) => {
 // }
 
 
+// const showCurrentUser = async (req, res) => {
+//   const { userId } = req.user;
+
+//   try {
+//       // Retrieve the latest user data from the database
+//       const user = await User.findById(userId);
+
+//       if (!user) {
+//           throw new CustomError.NotFoundError('User not found');
+//       }
+
+//       const userAgentDevice = req.headers['user-agent'];
+
+//       // Check if the user's device is blocked
+//       if (user.blockedDevices.includes(userAgentDevice)) {
+//           // Invalidate cookies
+//           res.cookie('accessToken', 'logout', {
+//               httpOnly: true,
+//               expires: new Date(Date.now() + 1000),
+//           });
+
+//           res.cookie('refreshToken', 'logout', {
+//               httpOnly: true,
+//               expires: new Date(Date.now() + 1000),
+//           });
+
+//           return res.status(StatusCodes.FORBIDDEN).json({
+//               message: 'Your device has been blocked. Please contact support for assistance.'
+//           });
+//       }
+
+//       // Check if the user's device is allowed
+//       if (!user.allowedDevices.includes(userAgentDevice)) {
+//           // Invalidate cookies
+//           res.cookie('accessToken', 'logout', {
+//               httpOnly: true,
+//               expires: new Date(Date.now() + 1000),
+//           });
+
+//           res.cookie('refreshToken', 'logout', {
+//               httpOnly: true,
+//               expires: new Date(Date.now() + 1000),
+//           });
+
+//           throw new CustomError.UnauthenticatedError('Your device is not allowed. Please check your email to confirm it was you.');
+//       }
+
+//       // Respond with the updated user object
+//       res.status(StatusCodes.OK).json(user);
+//   } catch (error) {
+//       // Handle errors
+//       console.error('Error fetching user data:', error);
+//       throw new CustomError.InternalServerError('Failed to fetch user data');
+//   }
+// };
+
+
+
 const showCurrentUser = async (req, res) => {
   const { userId } = req.user;
 
   try {
-      // Retrieve the latest user data from the database
-      const user = await User.findById(userId);
+    const user = await User.findById(userId);
 
-      if (!user) {
-          throw new CustomError.NotFoundError('User not found');
-      }
+    if (!user) {
+        throw new CustomError.NotFoundError('User not found');
+    }
 
-      const userAgentDevice = req.headers['user-agent'];
+      
+    const userAgentDevice = {
+      ipAddress: req.ip,
+      userAgent: req.headers['user-agent']
+    };
+  
+    const isBlocked = user.blockedDevices.some(device => 
+      device.ipAddress === userAgentDevice.ipAddress && device.userAgent === userAgentDevice.userAgent
+    );
+    
+    if (isBlocked) {
+      res.cookie('accessToken', 'logout', {
+        httpOnly: true,
+        expires: new Date(Date.now() + 1000),
+      });
 
-      // Check if the user's device is blocked
-      if (user.blockedDevices.includes(userAgentDevice)) {
-          // Invalidate cookies
-          res.cookie('accessToken', 'logout', {
-              httpOnly: true,
-              expires: new Date(Date.now() + 1000),
-          });
+      res.cookie('refreshToken', 'logout', {
+        httpOnly: true,
+        expires: new Date(Date.now() + 1000),
+      });
 
-          res.cookie('refreshToken', 'logout', {
-              httpOnly: true,
-              expires: new Date(Date.now() + 1000),
-          });
+      return res.status(StatusCodes.FORBIDDEN).json({
+        message: 'Your device has been blocked. Please contact support for assistance.'
+      });
+    
 
-          return res.status(StatusCodes.FORBIDDEN).json({
-              message: 'Your device has been blocked. Please contact support for assistance.'
-          });
-      }
+    }
+    
+    // Check if the user's device is in the allowed devices
+    const isAllowed = user.allowedDevices.some(device => 
+      device.ipAddress === userAgentDevice.ipAddress && device.userAgent === userAgentDevice.userAgent
+    );
+    
+    if (!isAllowed) {
+      res.cookie('accessToken', 'logout', {
+        httpOnly: true,
+        expires: new Date(Date.now() + 1000),
+      });
 
-      // Check if the user's device is allowed
-      if (!user.allowedDevices.includes(userAgentDevice)) {
-          // Invalidate cookies
-          res.cookie('accessToken', 'logout', {
-              httpOnly: true,
-              expires: new Date(Date.now() + 1000),
-          });
+      res.cookie('refreshToken', 'logout', {
+        httpOnly: true,
+        expires: new Date(Date.now() + 1000),
+      });
+      
+      throw new CustomError.UnauthenticatedError('Unrecognized device, please check your email to confirm it was you');
+    }
+    
+    res.status(StatusCodes.OK).json(user);
 
-          res.cookie('refreshToken', 'logout', {
-              httpOnly: true,
-              expires: new Date(Date.now() + 1000),
-          });
-
-          throw new CustomError.UnauthenticatedError('Your device is not allowed. Please check your email to confirm it was you.');
-      }
-
-      // Respond with the updated user object
-      res.status(StatusCodes.OK).json(user);
   } catch (error) {
-      // Handle errors
-      console.error('Error fetching user data:', error);
-      throw new CustomError.InternalServerError('Failed to fetch user data');
+    console.error('Error fetching user data:', error);
+    throw new CustomError.InternalServerError('Failed to fetch user data');
   }
 };
-
-
-// const showCurrentUser = async (req, res) => {
-  
-//   const { user } = req;
-
-//   const userAgentDevice = req.headers['user-agent'];
-//   if (!user || !user.blockedDevices || !Array.isArray(user.blockedDevices)) {
-//     // Handle the case where user or blockedDevices is not defined or is not an array
-//     throw new CustomError.NotFoundError('User data is missing or invalid');
-//   }
-
-//   // Check if the user's device is blocked
-//   if (user.blockedDevices.includes(userAgentDevice)) {
-    
-//     res.cookie('accessToken', 'logout', {
-//       httpOnly: true,
-//       expires: new Date(Date.now() + 1000),
-//     });
-
-//     res.cookie('refreshToken', 'logout', {
-//       httpOnly: true,
-//       expires: new Date(Date.now() + 1000),
-//     });
-
-//     throw new CustomError.UnauthorizedError('Your device has been blocked. Please contact support for assistance.');
-//   }
-
-//   if (!user.allowedDevices.includes(userAgentDevice)) {
-//     res.cookie('accessToken', 'logout', {
-//       httpOnly: true,
-//       expires: new Date(Date.now() + 1000),
-//     });
-
-//     res.cookie('refreshToken', 'logout', {
-//       httpOnly: true,
-//       expires: new Date(Date.now() + 1000),
-//     });
-//     throw new CustomError.UnauthenticatedError('Your device is not allowed. Please check your email to confirm it was you.');
-// }
-
-
-//   res.status(StatusCodes.OK).json(user);
-// };
-
-
-
-//============================================
-// const updateUser = async (req, res) => {
-//  const user = await User.findById(req.params.id)
-
-//   if(!user){
-//     throw new CustomError.NotFoundError(`User not found for id ${user}`)
-//   }
-
-//   const updateUser = await User.findByIdAndUpdate(
-//     req.params.id,
-//     req.body,
-//     {new:true}
-//   )
-
-//   const tokenUser = createTokenUser(updateUser);
-//   attachedCookiesToResponse({ res, user: tokenUser });
-
-//   res.status(StatusCodes.OK).json({ user: tokenUser });
-// };
-
 
 
 
