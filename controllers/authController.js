@@ -314,8 +314,8 @@ const login = async (req, res) => {
 
 const sendLoginAttemptNotification = async(user, ipAddress, deviceLog) => {
   
-    const origin = 'http://localhost:3000'
-    //const origin = 'https://paucs.store'
+   // const origin = 'http://localhost:3000'
+    const origin = 'https://paucs.store'
 
     await sendLoginAttempEmail({
         name: user.full_name,
