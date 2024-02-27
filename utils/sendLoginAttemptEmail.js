@@ -5,12 +5,12 @@ const sendEmail = require('./sendEmail')
 
 const sendLoginAttempEmail = async({name, school_email, token, origin, dateLog, device, ip, school_id}) => {
     //const resetLink = `${origin}/resetpass?token=${token}&email=${school_email}`
-    const blockUrl = `${origin}/api/auth/manage-device?action=block&device=${encodeURIComponent(device)}&ip=${encodeURIComponent(ip)}&school_id=${school_id}`;
-    const allow = `${origin}/api/auth/manage-device?action=allow&device=${encodeURIComponent(device)}&ip=${encodeURIComponent(ip)}&school_id=${school_id}`;
+    // const blockUrl = `${origin}/api/auth/manage-device?action=block&device=${encodeURIComponent(device)}&ip=${encodeURIComponent(ip)}&school_id=${school_id}`;
+    // const allow = `${origin}/api/auth/manage-device?action=allow&device=${encodeURIComponent(device)}&ip=${encodeURIComponent(ip)}&school_id=${school_id}`;
     
 
-    // const blockUrl = `${origin}/manage-device?action=block&device=${encodeURIComponent(device)}&ipAddress=${ipAddress}&school_id=${school_id}`;
-    // const allow = `${origin}/manage-device?action=allow&device=${encodeURIComponent(device)}&ipAddress=${ipAddress}&school_id=${school_id}`;
+    const blockUrl = `${origin}/manage-device?action=block&device=${encodeURIComponent(device)}&school_id=${school_id}`;
+    const allow = `${origin}/manage-device?action=allow&device=${encodeURIComponent(device)}&school_id=${school_id}`;
 
     const attempMessage = `
     <div style='background-color:white; padding:1rem; width:90%; margin:auto; font-family:"Trebuchet MS";'>
