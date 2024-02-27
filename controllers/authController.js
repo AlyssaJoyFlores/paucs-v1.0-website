@@ -147,22 +147,22 @@ const login = async (req, res) => {
     const { school_id, password, recaptchaToken } = req.body;
 
     //Verify reCAPTCHA token
-    // const secretKey = process.env.CAPTCHA_KEY;
+    const secretKey = process.env.CAPTCHA_KEY;
 
-    // if (!secretKey) {
-    //     throw new CustomError.BadRequestError('reCAPTCHA secret key is missing or invalid');
-    // }
+    if (!secretKey) {
+        throw new CustomError.BadRequestError('reCAPTCHA secret key is missing or invalid');
+    }
 
-    // if (!recaptchaToken) {
-    //     throw new CustomError.BadRequestError('reCAPTCHA secret key is missing or invalid');
-    // }
+    if (!recaptchaToken) {
+        throw new CustomError.BadRequestError('reCAPTCHA secret key is missing or invalid');
+    }
   
-    // const recaptchaResponse = await axios.post( `https://www.google.com/recaptcha/api/siteverify?secret=${secretKey}&response=${recaptchaToken}`)
+    const recaptchaResponse = await axios.post( `https://www.google.com/recaptcha/api/siteverify?secret=${secretKey}&response=${recaptchaToken}`)
 
-    // if (!recaptchaResponse.data.success) {
-    //     const errorDetails = JSON.stringify(recaptchaResponse.data);
-    //     throw new CustomError.BadRequestError('reCAPTCHA verification failed')
-    // }
+    if (!recaptchaResponse.data.success) {
+        const errorDetails = JSON.stringify(recaptchaResponse.data);
+        throw new CustomError.BadRequestError('reCAPTCHA verification failed')
+    }
     
 
     // Check if email and password exist in db
