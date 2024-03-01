@@ -95,8 +95,7 @@ const register = async (req, res) => {
             role,
             status,
             freeUnifStatus,
-            verificationToken,
-            allowedDevices: [userAgent]
+            verificationToken
         });
     }
 
