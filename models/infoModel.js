@@ -30,7 +30,7 @@ const HelpSupportSchema = new mongoose.Schema({
     title: {
         type: String,
     },
-    steps: [{
+    step: [{
         steps_num: Number,
         steps_title: String,
         steps_desc: String 

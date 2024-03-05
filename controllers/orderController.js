@@ -2,6 +2,7 @@ const {Order, CheckOut} = require('../models/orderModel')
 const Product = require('../models/productModel')
 const User = require('../models/usersModel')
 const Review = require('../models/reviewModel')
+require('dotenv').config();
 const {Notification, OrderNotification, AdminNotification} = require('../models/notificationModel')
 const {sendNotificationOrderStatus} = require('../utils')
 
@@ -392,8 +393,9 @@ const updateOrder = async (req, res) => {
         );
 
         if (req.body.status === 'to acquire'){
+            const origin =  process.env.ORIGIN;
             // const origin = 'http://localhost:3000'
-             const origin = 'https://paucs.store'
+            //  const origin = 'https://paucs.store'
       
             //sending email
             await sendNotificationOrderStatus({

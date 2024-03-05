@@ -1,4 +1,5 @@
 const mongoose = require('mongoose')
+const moment = require('moment');
 
 const userCredentials = new mongoose.Schema({
     full_name: {
@@ -98,7 +99,7 @@ const OrderSchema = new mongoose.Schema({
 
 const checkOutSchema = new mongoose.Schema({
     referenceId: {
-        type: Number,
+        type: String,
         unique: true
     },
     userInfo : [userCredentials],
@@ -135,23 +136,85 @@ const checkOutSchema = new mongoose.Schema({
 },{timestamps: true})
 
 
+// checkOutSchema.pre('save', async function (next) {
+//     try {
+//         if (!this.referenceId) {
+//             const CheckOutModel = this.constructor;
+
+//             // Find and increment the highest existing referenceId atomically
+//             const result = await CheckOutModel.findOneAndUpdate(
+//                 {},
+//                 { $inc: { referenceId: 1 } },
+//                 { sort: { referenceId: -1 }, upsert: true, new: true }
+//             );
+
+//             // Increment by 100000 to start from "100000"
+//             const incrementedValue = result.referenceId + 111110;
+
+//             // Format the incremented value to the desired format (000000)
+//             this.referenceId = incrementedValue.toString().padStart(6, '0');
+
+//             // Log for debugging
+//             console.log('New referenceId:', this.referenceId);
+//         }
+//         next();
+//     } catch (error) {
+//         next(error);
+//     }
+// });
+
+
+
+// checkOutSchema.pre('save', async function (next) {
+//     try {
+//         if (!this.referenceId) {
+//             const CheckOutModel = this.constructor;
+
+//             // Find and increment the highest existing referenceId atomically
+//             const result = await CheckOutModel.findOneAndUpdate(
+//                 {},
+//                 { $inc: { referenceId: 1 } },
+//                 { sort: { referenceId: -1 }, upsert: true, new: true }
+//             );
+
+//             // Increment by 1 to start from "1" since we cannot preserve leading zeros for number type
+//             const incrementedValue = result.referenceId + 1;
+
+//             // Store the incremented value directly
+//             this.referenceId = incrementedValue;
+
+//             // Log for debugging
+//             console.log('New referenceId:', this.referenceId);
+//         }
+//         next();
+//     } catch (error) {
+//         next(error);
+//     }
+// });
+
+
 checkOutSchema.pre('save', async function (next) {
     try {
         if (!this.referenceId) {
             const CheckOutModel = this.constructor;
 
-            // Find and increment the highest existing referenceId atomically
-            const result = await CheckOutModel.findOneAndUpdate(
-                {},
-                { $inc: { referenceId: 1 } },
-                { sort: { referenceId: -1 }, upsert: true, new: true }
-            );
+            // Find the highest existing referenceId atomically
+            const result = await CheckOutModel.findOne({}, {}, { sort: { referenceId: -1 } });
 
-            // Increment by 100000 to start from "100000"
-            const incrementedValue = result.referenceId + 111110;
+            let incrementedValue = 1;
+            if (result && result.referenceId) {
+                // Increment by 1 if there's an existing referenceId
+                incrementedValue = parseInt(result.referenceId.split('-')[1]) + 1;
+            }
 
-            // Format the incremented value to the desired format (000000)
-            this.referenceId = incrementedValue.toString().padStart(6, '0');
+            // Get current year
+            const currentYear = moment().year().toString();
+
+            // Format the incremented value with leading zeros (6 digits)
+            const paddedIncrement = incrementedValue.toString().padStart(6, '0');
+
+            // Construct the referenceId in the desired format
+            this.referenceId = `ORD${currentYear}-${paddedIncrement}`;
 
             // Log for debugging
             console.log('New referenceId:', this.referenceId);

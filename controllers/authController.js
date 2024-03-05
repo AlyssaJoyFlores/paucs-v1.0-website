@@ -4,6 +4,8 @@ const CustomError = require('../errors')
 const crypto = require('crypto')
 const axios = require('axios');
 const moment = require('moment')
+const UAParser = require('ua-parser-js');
+const os = require('os')
 require('dotenv').config();
 const {StatusCodes} = require('http-status-codes')
 const { attachedCookiesToResponse, createTokenUser, sendVerificationEmail, sendResetPasswordEmail, sendLoginAttempEmail, createHash} = require('../utils')
@@ -26,9 +28,10 @@ const register = async (req, res) => {
         address,
         status,
         freeUnifStatus,
-        orf_image,
         profile_image,
-        cover_image
+        orf_image,
+        cover_image,
+        isAgreedToTerms
     } = req.body;
 
     if (!/^(\d{2}-\d{4}-\d{6})$/.test(school_id)) {
@@ -44,6 +47,11 @@ const register = async (req, res) => {
     const schoolIdExist = await User.findOne({ school_id });
     if (schoolIdExist) {
         throw new CustomError.BadRequestError('School Id Already Exist');
+    }
+
+    if(isAgreedToTerms === false){
+        throw new CustomError.BadRequestError('You must agree to the terms and conditions of PAUCS to proceed with the registration');
+        
     }
 
     const firstAccount = await User.countDocuments({}) === 0;
@@ -73,6 +81,7 @@ const register = async (req, res) => {
             role: ['admin'],
             status,
             verificationToken,
+            isAgreedToTerms
         });
     } else {
         // If the role is student, create a student user
@@ -88,19 +97,22 @@ const register = async (req, res) => {
             section,
             gender,
             birthdate,
+            profile_image,
             address,
             orf_image,
-            profile_image,
             cover_image,
-            role,
+            role: ['student'],
             status,
             freeUnifStatus,
-            verificationToken
+            verificationToken,
+            isAgreedToTerms
         });
     }
 
+  
+    const origin =  process.env.ORIGIN;
     // const origin = 'http://localhost:3000'
-    const origin = 'https://paucs.store'
+    // const origin = 'https://paucs.store'
 
 
     //after creating the user now it will validate/confirm email
@@ -146,22 +158,22 @@ const login = async (req, res) => {
     const { school_id, password, recaptchaToken } = req.body;
 
     //Verify reCAPTCHA token
-    const secretKey = process.env.CAPTCHA_KEY;
+    // const secretKey = process.env.CAPTCHA_KEY;
 
-    if (!secretKey) {
-        throw new CustomError.BadRequestError('reCAPTCHA secret key is missing or invalid');
-    }
+    // if (!secretKey) {
+    //     throw new CustomError.BadRequestError('reCAPTCHA secret key is missing or invalid');
+    // }
 
-    if (!recaptchaToken) {
-        throw new CustomError.BadRequestError('reCAPTCHA secret key is missing or invalid');
-    }
+    // if (!recaptchaToken) {
+    //     throw new CustomError.BadRequestError('reCAPTCHA secret key is missing or invalid');
+    // }
   
-    const recaptchaResponse = await axios.post( `https://www.google.com/recaptcha/api/siteverify?secret=${secretKey}&response=${recaptchaToken}`)
+    // const recaptchaResponse = await axios.post( `https://www.google.com/recaptcha/api/siteverify?secret=${secretKey}&response=${recaptchaToken}`)
 
-    if (!recaptchaResponse.data.success) {
-        const errorDetails = JSON.stringify(recaptchaResponse.data);
-        throw new CustomError.BadRequestError('reCAPTCHA verification failed')
-    }
+    // if (!recaptchaResponse.data.success) {
+    //     const errorDetails = JSON.stringify(recaptchaResponse.data);
+    //     throw new CustomError.BadRequestError('reCAPTCHA verification failed')
+    // }
     
 
     // Check if email and password exist in db
@@ -235,29 +247,75 @@ const login = async (req, res) => {
     // }
 
 
+
+    const userAgentString = req.headers['user-agent']; // Get User-Agent string from request headers
+    const devices = new UAParser(userAgentString).getDevice();
+    const browsers = new UAParser(userAgentString).getBrowser();
+    const osUsed = new UAParser(userAgentString).getOS();
+    const cpuInfo = os.cpus()
+    const cpuModel = cpuInfo[0].model
+
+    // console.log(devices, browsers, osUsed, os.cpus());
+    // const result = parser.setUA(userAgentString).getResult();
+    // const deviceRes = parser.setUA(userAgentString).getDevice();
+
     const userAgentDevice = {
-        ipAddress: req.ip,
-        userAgent: req.headers['user-agent']
+        deviceUse: devices.vendor,
+        userAgent: userAgentString,
+        osUse: osUsed.name,
+        browserUse: browsers.name,
+        cpuUse: cpuModel,
+        deviceType: devices.type,
     };
+
+    if(userAgentDevice.deviceUse === undefined || userAgentDevice.deviceType === undefined || userAgentDevice.osUse === undefined || userAgentDevice.browserUse === undefined || userAgentDevice.cpuUse === undefined) {
+        userAgentDevice.deviceType = 'Desktop'
+        userAgentDevice.deviceUse = 'Desktop'
+
+        userAgentDevice.osUse = 'Desktop'
+        userAgentDevice.browserUse = 'Desktop'
+        userAgentDevice.cpuUse = 'Desktop'
+    }
+
+    const msg = 'my device: '
+
+    console.log(user.allowedDevices, msg, userAgentDevice )
     
     // Check if the user's device is in the blocked devices
     const isBlocked = user.blockedDevices.some(device => 
-        device.ipAddress === userAgentDevice.ipAddress && device.userAgent === userAgentDevice.userAgent
+        device.deviceUse === userAgentDevice.deviceUse && 
+        device.userAgent === userAgentDevice.userAgent &&
+        device.osUse === userAgentDevice.osUse &&
+        device.browserUse === userAgentDevice.browserUse &&
+        device.cpuUse === userAgentDevice.cpuUse &&
+        device.deviceType === userAgentDevice.deviceType
     );
     
     if (isBlocked) {
         throw new CustomError.UnauthorizedError('Your device has been blocked. Please contact support for assistance.');
     }
     
-    // Check if the user's device is in the allowed devices
-    const isAllowed = user.allowedDevices.some(device => 
-        device.ipAddress === userAgentDevice.ipAddress && device.userAgent === userAgentDevice.userAgent
-    );
-    
-    if (!isAllowed) {
-        sendLoginAttemptNotification(user, userAgentDevice.ipAddress, userAgentDevice.userAgent);
-        throw new CustomError.UnauthenticatedError('Unrecognized device, please check your email to confirm it was you');
+
+    if(user.isUserTest === false){
+        // Check if the user's device is in the allowed devices
+        const isAllowed = user.allowedDevices.some(device => 
+            device.deviceUse === userAgentDevice.deviceUse && 
+            device.userAgent === userAgentDevice.userAgent &&
+            device.osUse === userAgentDevice.osUse &&
+            device.browserUse === userAgentDevice.browserUse &&
+            device.cpuUse === userAgentDevice.cpuUse &&
+            device.deviceType === userAgentDevice.deviceType
+        );
+        
+        if (!isAllowed) {
+            sendLoginAttemptNotification(user, userAgentDevice.deviceUse, userAgentDevice.userAgent, userAgentDevice.osUse, userAgentDevice.browserUse, userAgentDevice.cpuUse, userAgentDevice.deviceType);
+            throw new CustomError.UnauthenticatedError('Unrecognized device, please check your email to confirm it was you');
+        }
+
+
     }
+
+
     
 
     
@@ -311,17 +369,23 @@ const login = async (req, res) => {
 
 
 
-const sendLoginAttemptNotification = async(user, ipAddress, deviceLog) => {
-  
-   // const origin = 'http://localhost:3000'
-    const origin = 'https://paucs.store'
+const sendLoginAttemptNotification = async(user, deviceUse, userAgent, osUse, browserUse, cpuUse, deviceType) => {
+    
+
+    const origin =  process.env.ORIGIN;
+    // const origin = 'http://localhost:3000'
+    //const origin = 'https://paucs.store'
 
     await sendLoginAttempEmail({
         name: user.full_name,
         school_email: user.school_email,
         dateLog: new Date(),
-        device: deviceLog,
-        ip: ipAddress,
+        userAgent: userAgent,
+        deviceUse: deviceUse,
+        osUse: osUse,
+        browserUse: browserUse,
+        cpuUse: cpuUse,
+        deviceType: deviceType,
         school_id: user.school_id,
         origin
       
@@ -333,7 +397,7 @@ const sendLoginAttemptNotification = async(user, ipAddress, deviceLog) => {
 
 
 const manageDevices = async (req, res) => {
-    const { action, device, ip, school_id} = req.query;
+    const { action, userAgent, deviceUse, school_id, osUse, browserUse, cpuUse, deviceType} = req.query;
 
     const user = await User.findOne({ school_id });
 
@@ -342,14 +406,23 @@ const manageDevices = async (req, res) => {
     }
 
     const userAgentDevice = {
-        ipAddress: ip,
-        userAgent: device
+        userAgent: userAgent,
+        deviceUse: deviceUse,
+        osUse: osUse,
+        browserUse: browserUse,
+        cpuUse: cpuUse,
+        deviceType: deviceType,
     };
 
     if (action === 'allow') {
         
         const isDeviceAllowed = user.allowedDevices.some(device =>
-            device.ipAddress === userAgentDevice.ipAddress && device.userAgent === userAgentDevice.userAgent
+            device.deviceUse === userAgentDevice.deviceUse && 
+            device.userAgent === userAgentDevice.userAgent &&
+            device.osUse === userAgentDevice.osUse &&
+            device.browserUse === userAgentDevice.browserUse &&
+            device.cpuUse === userAgentDevice.cpuUse &&
+            device.deviceType === userAgentDevice.deviceType
         );
         
         if (isDeviceAllowed) {
@@ -358,7 +431,12 @@ const manageDevices = async (req, res) => {
 
        
         user.blockedDevices = user.blockedDevices.filter(device =>
-            device.ipAddress !== userAgentDevice.ipAddress || device.userAgent !== userAgentDevice.userAgent
+            device.deviceUse !== userAgentDevice.deviceUse || 
+            device.userAgent !== userAgentDevice.userAgent ||
+            device.osUse !== userAgentDevice.osUse ||
+            device.browserUse !== userAgentDevice.browserUse ||
+            device.cpuUse !== userAgentDevice.cpuUse ||
+            device.deviceType !== userAgentDevice.deviceType
         );
 
       
@@ -367,7 +445,12 @@ const manageDevices = async (req, res) => {
     } else if (action === 'block') {
        
         const isDeviceBlocked = user.blockedDevices.some(device =>
-            device.ipAddress === userAgentDevice.ipAddress && device.userAgent === userAgentDevice.userAgent
+            device.deviceUse === userAgentDevice.deviceUse && 
+            device.userAgent === userAgentDevice.userAgent &&
+            device.osUse === userAgentDevice.osUse &&
+            device.browserUse === userAgentDevice.browserUse &&
+            device.cpuUse === userAgentDevice.cpuUse &&
+            device.deviceType === userAgentDevice.deviceType
         );
 
         if (isDeviceBlocked) {
@@ -376,7 +459,12 @@ const manageDevices = async (req, res) => {
 
      
         user.allowedDevices = user.allowedDevices.filter(dev =>
-            dev.ipAddress !== userAgentDevice.ipAddress || dev.userAgent !== userAgentDevice.userAgent
+            dev.deviceUse !== userAgentDevice.deviceUse || 
+            dev.userAgent !== userAgentDevice.userAgent ||
+            dev.osUse !== userAgentDevice.osUse ||
+            dev.browserUse !== userAgentDevice.browserUse ||
+            dev.cpuUse !== userAgentDevice.cpuUse ||
+            dev.deviceType !== userAgentDevice.deviceType
         );
 
        
@@ -468,8 +556,9 @@ const forgotPassword = async(req, res) => {
         const passwordToken = crypto.randomBytes(70).toString('hex')
         // send email  [miliseconds/seconds/minutes]
 
+        const origin =  process.env.ORIGIN;
         // const origin = 'http://localhost:3000'
-        const origin = 'https://paucs.store'
+        // const origin = 'https://paucs.store'
         await sendResetPasswordEmail({
             name:user.full_name, 
             school_email:user.school_email, 

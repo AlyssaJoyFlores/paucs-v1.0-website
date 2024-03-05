@@ -297,16 +297,16 @@ const getHelpSupport = async(req, res) => {
 
 
 const createHelpSupport = async(req, res) => {
-    const {title, steps} = req.body
+    const {title, step} = req.body
 
     
-    if(!title || !steps) {
+    if(!title || !step) {
         throw new CustomError.BadRequestError('All fields are required')
     }
 
     const helpSupport = await HelpSupport.create({
         title,
-        steps
+        step
     })
 
     res.status(StatusCodes.CREATED).json({helpSupport})

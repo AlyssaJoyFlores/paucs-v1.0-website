@@ -12,8 +12,13 @@ const configureSchema = new mongoose.Schema({
 })
 
 deviceSchema = new mongoose.Schema({
-    ipAddress: { type: String}, // Adding IP address property
-    userAgent: { type: String}
+    deviceUse: {type: String},
+    userAgent: { type: String},
+    osUse: {type: String},
+    browserUse: {type: String},
+    cpuUse: {type: String},
+    deviceType: {type: String},
+   
 });
 
 const usersSchema = new mongoose.Schema({
@@ -129,8 +134,17 @@ const usersSchema = new mongoose.Schema({
         type: Boolean,
         default: false
     },
+    isAgreedToTerms: {
+        type: Boolean
+    },
+    verificationStart: Date,
+    verificationEnd: Date,
     allowedDevices: [deviceSchema],
     blockedDevices: [deviceSchema],
+    isUserTest: {
+        type: Boolean,
+        default: false
+    },
 },{
     timestamps: true
 })

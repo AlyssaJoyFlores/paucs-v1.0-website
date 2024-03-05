@@ -5,6 +5,11 @@ const crypto = require('crypto')
 const CustomError = require('../errors')
 const {StatusCodes} = require('http-status-codes')
 const { attachedCookiesToResponse, createTokenUser, sendVerificationEmail, sendResetPasswordEmail, sendLoginAttempEmail, createHash} = require('../utils')
+const moment = require('moment');
+const UAParser = require('ua-parser-js');
+const os = require('os')
+
+
 
 const getAllUsers = async(req, res) => {
 const page = parseInt(req.query.page) || 1;
@@ -99,18 +104,91 @@ const getSingleUser = async(req, res) => {
   if (!user) {
       throw new CustomError.NotFoundError(`No user with id : ${req.params.id}`);
     }
-    // checkPermissions(req.user, user._id);
+    checkPermissions(req.user, user._id);
   res.status(StatusCodes.OK).json({msg: 'get single user', user})
 }
 
 
-// const showCurrentUser = async(req, res) => {
-//   // req.user.role = [req.user.role];
-//   console.log(req.user)
-//   // res.status(StatusCodes.OK).json({user: req.user});
-//   res.status(StatusCodes.OK).json(req.user);
 
-// }
+const showCurrentUser = async (req, res) => {
+  const user = req.user;
+  
+ 
+  const userAgentString = req.headers['user-agent']; // Get User-Agent string from request headers
+  const devices = new UAParser(userAgentString).getDevice();
+  const browsers = new UAParser(userAgentString).getBrowser();
+  const osUsed = new UAParser(userAgentString).getOS();
+  const cpuInfo = os.cpus()
+  const cpuModel = cpuInfo[0].model
+
+  // console.log(devices, browsers, osUsed, os.cpus());
+  // const result = parser.setUA(userAgentString).getResult();
+  // const deviceRes = parser.setUA(userAgentString).getDevice();
+
+  const userAgentDevice = {
+    deviceUse: devices.vendor,
+    userAgent: userAgentString,
+    osUse: osUsed.name,
+    browserUse: browsers.name,
+    cpuUse: cpuModel,
+    deviceType: devices.type,
+  };
+
+  const isBlocked = user.blockedDevices.some(device => 
+    device.deviceUse === userAgentDevice.deviceUse && 
+    device.userAgent === userAgentDevice.userAgent &&
+    device.browserUse === userAgentDevice.browserUse &&
+    device.osUse === userAgentDevice.osUse &&
+    device.cpuUse === userAgentDevice.cpuUse &&
+    device.deviceType === userAgentDevice.deviceType
+  );
+  
+  if (isBlocked) {
+    res.cookie('accessToken', 'logout', {
+      httpOnly: true,
+      expires: new Date(Date.now() + 1000),
+    });
+
+    res.cookie('refreshToken', 'logout', {
+      httpOnly: true,
+      expires: new Date(Date.now() + 1000),
+    });
+
+    return res.status(StatusCodes.FORBIDDEN).json({
+      message: 'Your device has been blocked. Please contact support for assistance.'
+    });
+  
+
+  }
+
+ 
+  const student = req.user.role.includes("student")
+  if (!req.user.isOrfVerified && student|| req.user.isOrfVerified === false && student || req.user.isOrfVerified === null && student ) {
+    req.user.message = "Please update your ORF";
+  }
+
+  if (req.user.isOrfVerified === true) {
+    const verificationEnd = moment.utc(req.user.verificationEnd);
+    const now = moment.utc()
+    const duration = moment.duration(verificationEnd.diff(now));
+    const remainingDays = duration.days();
+    const remainingHours = duration.hours();
+    const remainingMinutes = duration.minutes();
+    const remainingSeconds = duration.seconds();
+
+    req.user.countdown = {
+      days: remainingDays,
+      hours: remainingHours,
+      minutes: remainingMinutes,
+      seconds: remainingSeconds
+    };
+  }
+
+  res.status(StatusCodes.OK).json(req.user);
+}
+
+
+
 
 
 // const showCurrentUser = async (req, res) => {
@@ -171,69 +249,67 @@ const getSingleUser = async(req, res) => {
 
 
 
-const showCurrentUser = async (req, res) => {
-  const { userId } = req.user;
-
-  try {
-    const user = await User.findById(userId);
-
-    if (!user) {
-        throw new CustomError.NotFoundError('User not found');
-    }
-
-      
-    const userAgentDevice = {
-      ipAddress: req.ip,
-      userAgent: req.headers['user-agent']
-    };
+const showCurrentUsers = async (req, res) => {
+  const user = req.user;
   
-    const isBlocked = user.blockedDevices.some(device => 
-      device.ipAddress === userAgentDevice.ipAddress && device.userAgent === userAgentDevice.userAgent
-    );
     
-    if (isBlocked) {
-      res.cookie('accessToken', 'logout', {
-        httpOnly: true,
-        expires: new Date(Date.now() + 1000),
-      });
+  const userAgentDevice = {
+    ipAddress: req.ip,
+    userAgent: req.headers['user-agent']
+  };
 
-      res.cookie('refreshToken', 'logout', {
-        httpOnly: true,
-        expires: new Date(Date.now() + 1000),
-      });
+  const isBlocked = user.blockedDevices.some(device => 
+    device.ipAddress === userAgentDevice.ipAddress && device.userAgent === userAgentDevice.userAgent
+  );
+  
+  if (isBlocked) {
+    res.cookie('accessToken', 'logout', {
+      httpOnly: true,
+      expires: new Date(Date.now() + 1000),
+    });
 
-      return res.status(StatusCodes.FORBIDDEN).json({
-        message: 'Your device has been blocked. Please contact support for assistance.'
-      });
-    
+    res.cookie('refreshToken', 'logout', {
+      httpOnly: true,
+      expires: new Date(Date.now() + 1000),
+    });
 
-    }
-    
-    // Check if the user's device is in the allowed devices
-    const isAllowed = user.allowedDevices.some(device => 
-      device.ipAddress === userAgentDevice.ipAddress && device.userAgent === userAgentDevice.userAgent
-    );
-    
-    if (!isAllowed) {
-      res.cookie('accessToken', 'logout', {
-        httpOnly: true,
-        expires: new Date(Date.now() + 1000),
-      });
+    return res.status(StatusCodes.FORBIDDEN).json({
+      message: 'Your device has been blocked. Please contact support for assistance.'
+    });
+  
 
-      res.cookie('refreshToken', 'logout', {
-        httpOnly: true,
-        expires: new Date(Date.now() + 1000),
-      });
-      
-      throw new CustomError.UnauthenticatedError('Unrecognized device, please check your email to confirm it was you');
-    }
-    
-    res.status(StatusCodes.OK).json(user);
-
-  } catch (error) {
-    console.error('Error fetching user data:', error);
-    throw new CustomError.InternalServerError('Failed to fetch user data');
   }
+
+  if (req.user.enrollmentStart) {
+  const enrollmentStart = moment(req.user.enrollmentStart);
+  const expirationDate = enrollmentStart.clone().add(2, 'minutes'); // Add 1 year to enrollment start date
+  req.user.expirationDate = expirationDate.toDate();
+
+  const currentDate = moment();
+  if (currentDate.isAfter(expirationDate)) {
+    // If already expired, update orf_image to clear
+    req.user.orf_image = '';
+    req.user.message = 'Your ORF has expired. Please update it.';
+  } else {
+    // Calculate remaining time until expiration
+    const remainingTime = moment.duration(expirationDate.diff(currentDate));
+    const countdown = {
+      years: remainingTime.years(),
+      months: remainingTime.months(),
+      days: remainingTime.days(),
+      hours: remainingTime.hours(),
+      minutes: remainingTime.minutes(),
+      seconds: remainingTime.seconds()
+    };
+    req.user.countdown = countdown;
+  }
+} else {
+  // If enrollmentStart is not provided, ask the user to update their ORF
+  req.user.message = 'Please update your ORF';
+}
+
+  res.status(StatusCodes.OK).json(req.user);
+
 };
 
 
@@ -259,6 +335,14 @@ const updateUser = async (req, res) => {
         await updatedUser.save();
       }
     },  2 * 60 * 1000); // 2 days in milliseconds
+  }
+
+  if (req.body.status === 'unrestricted'){
+    const updatedUser = await User.findById(req.params.id);
+      if (updatedUser) {
+        updatedUser.restrictionStartTime = null
+        await updatedUser.save();
+      }
   }
 
   const updatedUser = await User.findByIdAndUpdate(
@@ -300,6 +384,20 @@ const updateUserPassword = async(req, res) => {
 }
 
 
+const deleteUser = async(req, res)=> {
+  const user = await User.findById(req.params.id)
+
+  if(!user){
+    throw new CustomError.NotFoundError('No user found')
+  }
+
+  await User.deleteOne({_id:user})
+
+  res.status(StatusCodes.OK).json({ msg: 'User Deleted Successfully', user});
+}
+
+
+
 const verifiedOrf = async(req, res) => {
 
   const user = await User.findById(req.params.id)
@@ -316,12 +414,31 @@ const verifiedOrf = async(req, res) => {
     )
   }
 
+  if(req.body.isOrfVerified === true) {
+    user.verificationStart = moment();
+    await user.save();
+
+    const verificationEnd = moment(req.body.verificationEnd);
+    const delayInMillis = verificationEnd.diff(moment());
+
+    setTimeout(async() => {
+      const updateUser = await User.findByIdAndUpdate(req.params.id)
+      if(updateUser){
+        updateUser.isOrfVerified = false
+        updateUser.verificationStart = ""
+        updateUser.verificationEnd = ""
+        updateUser.orf_image = ""
+        await updateUser.save()
+      }
+    }, delayInMillis)
+  }
+
   const updateUser = await User.findByIdAndUpdate(
     req.params.id,
     req.body,
     {new:true}
   )
-
+  
 
   const tokenUser = createTokenUser(updateUser);
   attachedCookiesToResponse({ res, user: tokenUser });
@@ -366,7 +483,6 @@ const registerUser = async (req, res) => {
       throw new CustomError.BadRequestError('School Id Already Exist');
   }
 
-  const userAgent = req.headers['user-agent'];
 
   //verification for email
   // this is the token for confirmation email
@@ -389,8 +505,9 @@ const registerUser = async (req, res) => {
           cover_image,
           role: ['admin'],
           status,
-          verificationToken,
-          allowedDevices: [userAgent]
+          isVerified: true,
+          isAgreedToTerms: true
+          
       });
   } else if (role === 'student') {
       // If the role is student, create a student user
@@ -413,26 +530,15 @@ const registerUser = async (req, res) => {
           role: ['student'],
           status,
           freeUnifStatus,
-          verificationToken,
-          allowedDevices: [userAgent]
+          isVerified: true,
+          isAgreedToTerms: true
       });
   } else {
       throw new CustomError.BadRequestError('Invalid role specified');
   }
 
-  // const origin = 'http://localhost:3000'
-  const origin = 'https://paucs.store'
 
-  //after creating the user now it will validate/confirm email
-  //sending email
-  await sendVerificationEmail({
-    name: user.full_name,
-    school_email: user.school_email,
-    verificationToken: user.verificationToken,
-    origin
-  })
-
-  res.status(StatusCodes.CREATED).json({ msg: 'Please check your email to verify your account' });
+  res.status(StatusCodes.CREATED).json({ msg: 'Account Created Successfully' });
 }
 
 
@@ -443,6 +549,7 @@ module.exports = {
   showCurrentUser,
   updateUser,
   updateUserPassword,
+  deleteUser,
   verifiedOrf,
   searchUsers,
   registerUser

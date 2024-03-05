@@ -12,6 +12,7 @@ const {
     showCurrentUser,
     updateUser,
     updateUserPassword,
+    deleteUser,
     verifiedOrf,
     searchUsers,
     registerUser
@@ -26,6 +27,7 @@ router.route('/search').get(authenticateUser, searchUsers)
 router.route('/updateUserPassword').patch(authenticateUser, updateUserPassword)
 
 router.route('/updateUser/:id').patch(authenticateUser, updateUser)
+router.route('/deleteUser/:id').delete([authenticateUser, authorizePermissions('admin')], deleteUser)
 router.route('/verifiedOrf/:id').patch(authenticateUser, verifiedOrf)
 router.route('/singleUser/:id').get(authenticateUser, getSingleUser)
 
