@@ -157,7 +157,7 @@ const verifyEmail =  async(req, res) => {
 const login = async (req, res) => {
     const { school_id, password, recaptchaToken } = req.body;
 
-   // Verify reCAPTCHA token
+    //Verify reCAPTCHA token
     const secretKey = process.env.CAPTCHA_KEY;
 
     if (!secretKey) {
@@ -268,15 +268,15 @@ const login = async (req, res) => {
         deviceType: devices.type,
     };
 
-    if(userAgentDevice.deviceUse === undefined || userAgentDevice.deviceType === undefined || userAgentDevice.osUse === undefined || userAgentDevice.browserUse === undefined || userAgentDevice.cpuUse === undefined) {
+    if(userAgentDevice.deviceUse === undefined || userAgentDevice.deviceType === undefined) {
         userAgentDevice.deviceType = 'Desktop'
         userAgentDevice.deviceUse = 'Desktop'
 
-        userAgentDevice.osUse = 'Desktop'
-        userAgentDevice.browserUse = 'Desktop'
-        userAgentDevice.cpuUse = 'Desktop'
+        // userAgentDevice.osUse = 'Desktop'
+        // userAgentDevice.browserUse = 'Desktop'
+        // userAgentDevice.cpuUse = 'Desktop'
     }
-
+    // || userAgentDevice.osUse === undefined || userAgentDevice.browserUse === undefined || userAgentDevice.cpuUse === undefined
     const msg = 'my device: '
 
     console.log(user.allowedDevices, msg, userAgentDevice )

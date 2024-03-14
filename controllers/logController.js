@@ -1,5 +1,6 @@
 // logController.js
 const adminLogModel = require('../models/adminLogModel');
+const moment = require('moment');
 
 const logController = async (req, res, next) => {
   try {
@@ -21,6 +22,11 @@ const logController = async (req, res, next) => {
 
 
 const getAdminLogs = async(req, res) => {
+      //delete logs if already 1 week ago
+      const oneWeekAgo = moment().subtract(1, 'weeks');
+      await adminLogModel.deleteMany({ createdAt: { $lt: oneWeekAgo } });
+
+
     const log = await adminLogModel.find({}).sort({createdAt: -1})
     res.status(200).json({log})
 }

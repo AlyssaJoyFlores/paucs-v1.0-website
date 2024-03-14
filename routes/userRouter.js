@@ -15,7 +15,8 @@ const {
     deleteUser,
     verifiedOrf,
     searchUsers,
-    registerUser
+    registerUser,
+    verifiedMultipleOrf
 } = require('../controllers/userController')
 
 
@@ -25,6 +26,7 @@ router.route('/showMe').get(authenticateUser, showCurrentUser)
 router.route('/search').get(authenticateUser, searchUsers)
 
 router.route('/updateUserPassword').patch(authenticateUser, updateUserPassword)
+router.route('/verifiedMultipleOrf').patch(authenticateUser, verifiedMultipleOrf)
 
 router.route('/updateUser/:id').patch(authenticateUser, updateUser)
 router.route('/deleteUser/:id').delete([authenticateUser, authorizePermissions('admin')], deleteUser)

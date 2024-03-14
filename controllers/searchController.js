@@ -1,5 +1,6 @@
 const Product = require('../models/productModel')
 const Announcement = require('../models/announcementModel')
+
 const Policy = require('../models/policyModel')
 const {Order, CheckOut} = require('../models/orderModel')
 
@@ -20,6 +21,8 @@ const overallSearchAdmin = async (req, res) => {
             { anncmt_description: { $regex: search, $options: 'i' } },
             { steps: { $regex: search, $options: 'i' } },
             { description: { $regex: search, $options: 'i' } },
+            { full_name: { $regex: search, $options: 'i' } }, // Added user search criteria
+            { school_id: { $regex: search, $options: 'i' } }
         ];
     }
 
@@ -63,12 +66,13 @@ const overallSearchAdmin = async (req, res) => {
         })
     );
 
-    const [announcements, policies] = await Promise.all([
+    const [announcements, policies, users] = await Promise.all([
         Announcement.find(queryObject).collation({ locale: 'en', strength: 2 }).exec(),
         Policy.find(queryObject).collation({ locale: 'en', strength: 2 }).exec(),
+        User.find(queryObject).collation({ locale: 'en', strength: 2 }).exec(),
     ]);
 
-    const totalCount = productsWithTotalCtgyStocksAndSales.length + announcements.length + policies.length;
+    const totalCount = productsWithTotalCtgyStocksAndSales.length + announcements.length + policies.length + users.length;
 
     const searchResults = {
         products: {
@@ -82,6 +86,10 @@ const overallSearchAdmin = async (req, res) => {
         policies: {
             results: policies,
             count: policies.length,
+        },
+        users: {
+            results: users,
+            count: users.length
         },
         totalCount: totalCount,
     };

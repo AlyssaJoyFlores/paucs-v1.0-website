@@ -13,15 +13,17 @@ const os = require('os')
 
 const getAllUsers = async(req, res) => {
 const page = parseInt(req.query.page) || 1;
-  const pageSize = Number(req.query.pageSize) || 12;
+  const pageSize = parseInt(req.query.pageSize) || 12;
   const skip = (page - 1) * pageSize;
 
-  const { college_dept, course } = req.query;
+  const { college_dept, course, year, isOrfVerified } = req.query;
   const searchQuery = req.query.search;
 
   const filterConditions = {};
   if (college_dept) filterConditions.college_dept = college_dept;
   if (course) filterConditions.course = course;
+  if (year) filterConditions.year = year;
+  if (isOrfVerified) filterConditions.isOrfVerified = isOrfVerified;
 
   if (searchQuery) {
     filterConditions.$or = [
@@ -30,9 +32,7 @@ const page = parseInt(req.query.page) || 1;
     ];
   }
 
-  const overAllUser = await User.countDocuments();
-  const totalUser = await User.countDocuments(filterConditions);
-  const totalPages = Math.ceil(totalUser / pageSize);
+
 
   const users = await User.find({ role: 'student', ...filterConditions })
     .select('-password')
@@ -40,6 +40,10 @@ const page = parseInt(req.query.page) || 1;
     .skip(skip)
     .limit(pageSize)
     .exec();
+
+    const overAllUser = await User.countDocuments();
+    const totalUser = await User.countDocuments(filterConditions);
+    const totalPages = Math.ceil(totalUser / pageSize);
 
   res.status(StatusCodes.OK).json({ users, overAllUser, totalUser, totalPages });
 
@@ -542,6 +546,66 @@ const registerUser = async (req, res) => {
 }
 
 
+const verifiedMultipleOrf = async (req, res) => {
+  const userIds = req.body.userIds;
+
+  if (!userIds || !Array.isArray(userIds) || userIds.length === 0) {
+    return res.status(StatusCodes.BAD_REQUEST).json({ message: "Invalid or empty user IDs provided." });
+  }
+
+
+  const updatedUsers = [];
+
+  for (const userId of userIds) {
+    const user = await User.findById(userId);
+
+    if (!user) {
+      throw new CustomError.NotFoundError(`User not found for id ${userId}`);
+    }
+
+    if (user.year === '1ST YR') {
+      await User.findByIdAndUpdate(
+        userId,
+        { freeUnifStatus: 'freeUnif' },
+        { new: true }
+      );
+    }
+
+    if (req.body.isOrfVerified === true) {
+      user.verificationStart = moment();
+      await user.save();
+
+      const verificationEnd = moment(req.body.verificationEnd);
+      const delayInMillis = verificationEnd.diff(moment());
+
+      setTimeout(async () => {
+        const updateUser = await User.findByIdAndUpdate(userId);
+        if (updateUser) {
+          updateUser.isOrfVerified = false;
+          updateUser.verificationStart = "";
+          updateUser.verificationEnd = "";
+          updateUser.orf_image = "";
+          await updateUser.save();
+        }
+      }, delayInMillis);
+    }
+
+    const updateUser = await User.findByIdAndUpdate(
+      userId,
+      req.body,
+      { new: true }
+    );
+
+    updatedUsers.push(updateUser);
+  }
+
+  const tokenUsers = updatedUsers.map(updateUser => createTokenUser(updateUser));
+
+  res.status(StatusCodes.OK).json({ users: tokenUsers });
+
+};
+
+
 
 module.exports = {
   getAllUsers,
@@ -552,7 +616,8 @@ module.exports = {
   deleteUser,
   verifiedOrf,
   searchUsers,
-  registerUser
+  registerUser,
+  verifiedMultipleOrf
 }
 
 

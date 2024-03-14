@@ -8,7 +8,7 @@ const sendLoginAttempEmail = async({name, school_email, token, origin, dateLog, 
     // const blockUrl = `${origin}/api/auth/manage-device?action=block&device=${encodeURIComponent(device)}&ip=${encodeURIComponent(ip)}&school_id=${school_id}`;
     // const allow = `${origin}/api/auth/manage-device?action=allow&device=${encodeURIComponent(device)}&ip=${encodeURIComponent(ip)}&school_id=${school_id}`;
     
-     const allow = `${origin}/api/auth/manage-device?action=allow&userAgent=${encodeURIComponent(userAgent)}&deviceUse=${encodeURIComponent(deviceUse)}&cpuUse=${encodeURIComponent(cpuUse)}&browserUse=${encodeURIComponent(browserUse)}&school_id=${school_id}&osUse=${encodeURIComponent(osUse)}&deviceType=${encodeURIComponent(deviceType)}`
+     const allow = `${origin}/manage-device?action=allow&userAgent=${encodeURIComponent(userAgent)}&deviceUse=${encodeURIComponent(deviceUse)}&cpuUse=${encodeURIComponent(cpuUse)}&browserUse=${encodeURIComponent(browserUse)}&school_id=${school_id}&osUse=${encodeURIComponent(osUse)}&deviceType=${encodeURIComponent(deviceType)}`
 
     const blockUrl = `${origin}/manage-device?action=block&userAgent=${encodeURIComponent(userAgent)}&deviceUse=${encodeURIComponent(deviceUse)}&cpuUse=${encodeURIComponent(cpuUse)}&browserUse=${encodeURIComponent(browserUse)}&school_id=${school_id}`;
     // const allow = `${origin}/manage-device?action=allow&userAgent=${encodeURIComponent(userAgent)}&deviceUse=${encodeURIComponent(deviceUse)}&school_id=${school_id}&cpuUse=${encodeURIComponent(cpuUse)}`;

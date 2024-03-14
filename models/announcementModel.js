@@ -19,11 +19,9 @@ const announcementSchema = new mongoose.Schema({
     },
     profile_image: {
         type: String,
-        required: true,
     },
     anncmnt_publisher: {
          type: String,
-        required: true,
     },
     categories: {
         type: String,

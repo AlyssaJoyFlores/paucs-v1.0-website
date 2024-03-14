@@ -4,11 +4,25 @@ const {StatusCodes} = require('http-status-codes')
 const Product = require('../models/productModel')
 const User = require('../models/usersModel')
 const CustomError = require('../errors')
-
+const moment = require('moment');
 
 
 const getNotifications = async (req, res) => {
     const userId = req.user.userId;
+
+    //delete notif if already 1 week ago
+    const oneWeekAgo = moment().subtract(1, 'weeks');
+    await Notification.deleteMany({ createdAt: { $lt: oneWeekAgo }, status: 'read' });
+    await OrderNotification.deleteMany({ createdAt: { $lt: oneWeekAgo }, status: 'read' });
+    
+  
+
+    //for testing purposes
+    // const twoMinutesAgo = moment().subtract(2, 'minutes');
+    // await Notification.deleteMany({ createdAt: { $lt: twoMinutesAgo }, status: 'read' });
+    // await OrderNotification.deleteMany({ createdAt: { $lt: twoMinutesAgo }, status: 'read' });
+
+
     const userNotifications = await OrderNotification.find({userId}).sort({ createdAt: -1 });
     const usercountUnread = await OrderNotification.find({userId, status: 'unread' });
     
@@ -27,6 +41,15 @@ const getNotifications = async (req, res) => {
 
 const getAdminNotification = async(req, res) => {
    
+    //delete notif if already 1 week ago
+    const oneWeekAgo = moment().subtract(1, 'weeks');
+    await AdminNotification.deleteMany({ createdAt: { $lt: oneWeekAgo }, status: 'read' });
+  
+ 
+
+    //for testing purposes
+    // const twoMinutesAgo = moment().subtract(5, 'minutes');
+    // await AdminNotification.deleteMany({ createdAt: { $lt: twoMinutesAgo } });
 
     
     const adminNotifications = await AdminNotification.find({category: 'order'}).sort({ createdAt: -1 });
