@@ -56,7 +56,7 @@ const toReceiveOrders = async (req, res) => {
     userFullName: order.userInfo[0].full_name,
     collegeDepartment: order.userInfo[0].college_dept,
     receivedDate: order.receivedDate,
-    // reference id here
+     referenceId: order.referenceId
   }));
 
   // Return the extracted information
