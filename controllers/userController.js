@@ -28,8 +28,12 @@ const page = parseInt(req.query.page) || 1;
   if (searchQuery) {
     filterConditions.$or = [
       { full_name: { $regex: searchQuery, $options: 'i' } },
-      { school_id: { $regex: searchQuery, $options: 'i' } }
+      { school_id: { $regex: searchQuery, $options: 'i' } },
+      { college_dept: { $regex: searchQuery, $options: 'i' } },
+      { course: { $regex: searchQuery, $options: 'i' } },
     ];
+
+     
   }
 
 
@@ -108,7 +112,7 @@ const getSingleUser = async(req, res) => {
   if (!user) {
       throw new CustomError.NotFoundError(`No user with id : ${req.params.id}`);
     }
-    checkPermissions(req.user, user._id);
+    //checkPermissions(req.user, user._id);
   res.status(StatusCodes.OK).json({msg: 'get single user', user})
 }
 
@@ -166,10 +170,10 @@ const showCurrentUser = async (req, res) => {
   }
 
  
-  const student = req.user.role.includes("student")
-  if (!req.user.isOrfVerified && student|| req.user.isOrfVerified === false && student || req.user.isOrfVerified === null && student ) {
-    req.user.message = "Please update your ORF";
-  }
+  // const student = req.user.role.includes("student")
+  // if (!req.user.isOrfVerified && student|| req.user.isOrfVerified === false && student || req.user.isOrfVerified === null && student ) {
+  //   req.user.message = "Please update your ORF";
+  // }
 
   if (req.user.isOrfVerified === true) {
     const verificationEnd = moment.utc(req.user.verificationEnd);
@@ -541,7 +545,8 @@ const registerUser = async (req, res) => {
       throw new CustomError.BadRequestError('Invalid role specified');
   }
 
-
+  user.verified = Date.now()
+  await user.save()
   res.status(StatusCodes.CREATED).json({ msg: 'Account Created Successfully' });
 }
 

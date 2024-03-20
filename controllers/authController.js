@@ -268,7 +268,7 @@ const login = async (req, res) => {
         deviceType: devices.type,
     };
 
-    if(userAgentDevice.deviceUse === undefined || userAgentDevice.deviceType === undefined) {
+    if(userAgentDevice.deviceUse === undefined || userAgentDevice.deviceType === undefined ) {
         userAgentDevice.deviceType = 'Desktop'
         userAgentDevice.deviceUse = 'Desktop'
 

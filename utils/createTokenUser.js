@@ -18,6 +18,7 @@ const createTokenUser = (user) => {
         profile_image: user.profile_image,
         cover_image: user.cover_image,
         status: user.status,
+        verified: user.verified,
         isVerified: user.isVerified,
         isOrfVerified: user.isOrfVerified,
         isVoucherUse: user.isVoucherUse,

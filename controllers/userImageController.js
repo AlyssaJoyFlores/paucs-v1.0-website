@@ -82,9 +82,17 @@ const updateUserImage = async (req, res) => {
         console.error("Error deleting existing image from Cloudinary:", error);
     }
 
+    //validation for image
+    if (!req.files.profile_image.mimetype.startsWith('image')) {
+        throw new CustomError.BadRequestError('Please Upload Image File Type Only');
+    }
+            
+
     if (!req.files || !req.files.profile_image) {
         return res.status(StatusCodes.OK).json({ message: 'profile without image' });
     }
+
+    
 
     const result = await cloudinary.uploader.upload(req.files.profile_image.tempFilePath, {
         use_filename: true,
@@ -117,6 +125,12 @@ const updateOrfImage = async (req, res) => {
     } catch (error) {
         console.error("Error deleting existing image from Cloudinary:", error);
     }
+
+       //validation for image
+    if (!req.files.orf_image.mimetype.startsWith('image')) {
+        throw new CustomError.BadRequestError('Please Upload Image File Type Only');
+    }
+        
 
     if (!req.files || !req.files.orf_image) {
         return res.status(StatusCodes.OK).json({ message: 'orf without image' });
@@ -154,6 +168,12 @@ const updateCoverImage = async (req, res) => {
     } catch (error) {
         console.error("Error deleting existing image from Cloudinary:", error);
     }
+
+    //validation for image
+    if (!req.files.cover_image.mimetype.startsWith('image')) {
+        throw new CustomError.BadRequestError('Please Upload Image File Type Only');
+    }
+        
 
     if (!req.files || !req.files.cover_image) {
         return res.status(StatusCodes.OK).json({ message: 'cover without image' });

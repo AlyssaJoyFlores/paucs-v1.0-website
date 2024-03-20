@@ -68,6 +68,12 @@ const ProductSchema = new mongoose.Schema({
     toObject:{virtuals:true}
 },)
 
+ ProductSchema.virtual('sizecharts', {
+    ref: 'SizeChart',
+    foreignField: 'chart_categories',
+    localField: 'prod_type'
+ })
+
 
 ProductSchema.virtual('reviews', {
     ref:'Review',

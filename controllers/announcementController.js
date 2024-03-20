@@ -127,6 +127,7 @@ const addAnnouncement = async (req, res) => {
       message: `${anncmnt_title}`,
       profile: `${user.profile_image}`,
       announcement_id: announcement._id,
+      category: 'announcement',
     });
   
 
@@ -213,6 +214,11 @@ const uploadAnnImage = async(req, res) => {
         return res.status(200).json({ message: 'announcement without image' });
     }
 
+    //validation for image
+    if (!req.files.image.mimetype.startsWith('image')) {
+        throw new CustomError.BadRequestError('Please Upload Image File Type Only');
+    }
+
     const result = await cloudinary.uploader.upload(req.files.image.tempFilePath, {
         use_filename:true,
         folder:'announcement-folder'
@@ -222,6 +228,7 @@ const uploadAnnImage = async(req, res) => {
 
     return res.status(StatusCodes.OK).json({image:{src:result.secure_url}})
 }
+
 
 // to udpate image in cloudinary
 const uploadUpdateAnnImage = async (req, res) => {
@@ -244,6 +251,12 @@ const uploadUpdateAnnImage = async (req, res) => {
     if (!req.files || !req.files.image) {
         return res.status(200).json({ message: 'announcement without image' });
     }
+
+    //validation for image
+    if (!req.files.image.mimetype.startsWith('image')) {
+        throw new CustomError.BadRequestError('Please Upload Image File Type Only');
+    }
+
 
     const result = await cloudinary.uploader.upload(req.files.image.tempFilePath, {
         use_filename: true,

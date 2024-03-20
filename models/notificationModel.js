@@ -26,11 +26,14 @@ const notificationSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId, 
         ref: 'Product',
     },
-    policy_id: { 
+    support_id: { 
         type: mongoose.Schema.Types.ObjectId, 
-        ref: 'Policy',
-    }
-    
+        ref: 'HelpSupport',
+    },
+    category: {
+        type: String,
+        enum: ['product', 'announcement', 'helpsupport']
+    },
 }, {timestamps: true})
 
 // Add a virtual property for formatted time
@@ -69,7 +72,7 @@ const userOrderNotificationSchema = new mongoose.Schema({
     userId: {
         type: mongoose.Types.ObjectId,
         ref: 'User'
-    },
+    }
 }, {timestamps: true})
 
 // Add a virtual property for formatted time

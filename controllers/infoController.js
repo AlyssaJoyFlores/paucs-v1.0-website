@@ -1,10 +1,11 @@
 const {  About, SizeChart, Terms, Privacy, HelpSupport } = require('../models/infoModel')
+const {Notification} = require('../models/notificationModel')
 const CustomError = require('../errors')
 const {StatusCodes} = require('http-status-codes')
-const {checkPermissions} = require('../utils')
-const mongoose = require('mongoose')
 const cloudinary = require('cloudinary').v2;
 const fs = require('fs')
+
+
 
 const getAbout = async(req, res) => {
     const about = await About.find({})
@@ -69,7 +70,7 @@ const getSizeChart = async(req, res) => {
 
 
 const createSizeChart = async(req, res) => {
-    const {chart_title, chart_image, sizes} = req.body
+    const {chart_title, chart_image, sizes, chart_categories} = req.body
 
     
     if(!chart_title || !chart_image) {
@@ -79,6 +80,7 @@ const createSizeChart = async(req, res) => {
     const sizeChart = await SizeChart.create({
         chart_title,
         chart_image,
+        chart_categories,
         sizes,
         user: req.user.userId
     })
@@ -137,6 +139,11 @@ const uploadSizeChartImage = async(req, res) => {
         return res.status(200).json({ message: 'size chart without image' });
     }
 
+      //validation for image
+    if (!req.files.chart_image.mimetype.startsWith('image')) {
+    throw new CustomError.BadRequestError('Please Upload Image File Type Only');
+    }
+
     const result = await cloudinary.uploader.upload(req.files.chart_image.tempFilePath, {
         use_filename:true,
         folder:'chart-image-folder'
@@ -164,6 +171,12 @@ const updateSizeChartImage = async(req, res) => {
     } catch (error) {
         console.error("Error deleting existing image from Cloudinary:", error);
     }
+
+    //validation for image
+    if (!req.files.chart_image.mimetype.startsWith('image')) {
+        throw new CustomError.BadRequestError('Please Upload Image File Type Only');
+    }
+        
 
     if (!req.files || !req.files.chart_image) {
         return res.status(200).json({ message: 'size chart without image' });
@@ -308,6 +321,21 @@ const createHelpSupport = async(req, res) => {
         title,
         step
     })
+
+          // Create a notification
+    await Notification.create({
+        title: `${req.user.full_name} Posted New Help Support`,
+        message: `${title} has been added.`,
+        support_id: helpSupport._id,
+        profile: `${req.user.profile_image}`,
+        category: 'helpsupport',
+
+    });
+    
+        // Fetch notifications after creating the announcement
+    const notifications = await Notification.find({}).sort({ createdAt: -1 });
+    
+    io.emit('newPolicy', {notifications});
 
     res.status(StatusCodes.CREATED).json({helpSupport})
 }

@@ -253,7 +253,7 @@ const getAllProductsAdmin = async (req, res) => {
 
 
 const getSingleProduct = async(req, res) => {
-    const product = await Product.findById(req.params.id).populate('reviews')
+    const product = await Product.findById(req.params.id).populate('reviews').populate('sizecharts');
     if(!product){
         throw new CustomError.NotFoundError('Product not found')
     }
@@ -299,6 +299,7 @@ const addProduct = async(req, res)=> {
     message: `${prod_name} has been added.`,
     product_id: product._id,
     profile: `${user.profile_image}`,
+    category: 'product'
   });
   
     // Fetch notifications after creating the announcement
@@ -381,6 +382,11 @@ const deleteProduct = async(req, res)=> {
 
 
 const uploadProdImage = async(req, res)=> {
+    //validation for image
+  if (!req.files.image.mimetype.startsWith('image')) {
+    throw new CustomError.BadRequestError('Please Upload Image File Type Only');
+  }
+
   const result = await cloudinary.uploader.upload(req.files.image.tempFilePath, {
     use_filename:true,
     folder:'product-folder'
@@ -437,6 +443,11 @@ const updateProdImage = async(req, res)=> {
         }
     } catch (error) {
       console.error("Error deleting existing image from Cloudinary:", error);
+    }
+
+    //validation for image
+    if (!req.files.image.mimetype.startsWith('image')) {
+      throw new CustomError.BadRequestError('Please Upload Image File Type Only');
     }
 
     const result = await cloudinary.uploader.upload(req.files.image.tempFilePath, {

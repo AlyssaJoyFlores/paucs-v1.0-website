@@ -17,10 +17,14 @@ const SizeChartSchema = new mongoose.Schema({
     chart_image: {
         type: String
     },
+    chart_categories: {
+        type: String,
+        enum: ['T-Shirt', 'Polo', 'Uniform', 'P.E. Uniform','Slacks', 'Attire', 'Others']
+    },
     sizes: [{
         size_name: String,
-        cm: Number,
-        inch: Number
+        width: String,
+        length: String
     }]
 
 },{timestamps: true})

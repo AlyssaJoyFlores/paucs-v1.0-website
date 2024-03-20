@@ -11,7 +11,7 @@ const mongoose = require('mongoose')
 const getAllInventory = async (req, res) => {
     try {
       // Get all products
-      const allProducts = await Product.find();
+      const allProducts = await Product.find({isArchived: false});
   
       // Initialize an array to store product information and totals
       const productInventory = [];

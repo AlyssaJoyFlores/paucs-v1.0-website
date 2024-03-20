@@ -91,6 +91,13 @@ const addToCart = async (req, res) => {
             );
         }
 
+        if(item.quantity > category.ctgy_stocks){
+            throw new CustomError.BadRequestError(
+                `Cannot add more items `
+            );
+        }
+
+
 
         let finalPrice;
    
@@ -143,7 +150,7 @@ const addToCart = async (req, res) => {
 
 
 const updateQuantity = async (req, res) => {
-    const { orderId, quantity, product } = req.body;
+    const { orderId, quantity } = req.body;
 
     const user = await User.findById(req.user.userId);
 
@@ -164,6 +171,7 @@ const updateQuantity = async (req, res) => {
 
     // Update quantity for all items in the order
     order.orderItems.forEach(item => {
+        
         // Apply discount logic
         let finalPrice;
         const prod_benefits = item.prod_benefits;
@@ -197,93 +205,112 @@ const updateQuantity = async (req, res) => {
 
 // CHECKOUTS
 const checkOut = async (req, res) => {
-    try {
-        const user = await User.findById(req.user.userId);
 
-        if (!user) {
-            throw new CustomError.NotFoundError('User not found');
-        }
+    const user = await User.findById(req.user.userId);
 
-        const { orders } = req.body;
-
-        if (!orders || !Array.isArray(orders) || orders.length === 0) {
-            throw new CustomError.BadRequestError('Invalid or empty orders array');
-        }
-
-        const orderIds = orders.map(order => order._id);
-
-        // Log orderIds for debugging
-        console.log('Order IDs:', orderIds);
-
-        // Use find to get the updated orders
-        const updatedOrders = await Order.find({ _id: { $in: orderIds } });
-
-        console.log('Order IDs:', updatedOrders);
-        // Check if updatedOrders is an array
-        if (!Array.isArray(updatedOrders)) {
-            throw new Error('updatedOrders is not an array');
-        }
-
-        const totalOrders = await Order.aggregate([
-            {
-                $match: { _id: { $in: orderIds.map(id => new mongoose.Types.ObjectId(id)) } },
-            },
-            {
-                $group: {
-                    _id: null,
-                    total: { $sum: '$total' },
-                },
-            },
-        ]);
-
-        const totalAmount = totalOrders.length > 0 ? totalOrders[0].total : 0;
-        
-
-        const checkOutOrder = await CheckOut.create({
-            referenceId: null,
-            userInfo: [{
-                full_name: user.full_name,
-                school_id: user.school_id,
-                school_email: user.school_email,
-                college_dept: user.college_dept,
-                course: user.course,
-                year: user.year,
-                section: user.section,
-                profile_image: user.profile_image,
-            }],
-            orders: updatedOrders.map(order => ({
-                total: order.total,
-                orderItems: order.orderItems,
-            })),
-            totalAmount,
-            orderDate: new Date(),
-            user: req.user.userId
-        });
-
-        await Order.deleteMany({ _id: { $in: orderIds } });
-
-        const productNames = updatedOrders.map(order => order.orderItems.map(item => item.prod_name).join(', ')).join(', ');
-
-        const adminNotification = await AdminNotification.create({
-            title: `${user.full_name} just placed an order`,
-            message: `${productNames}`,
-            profile: `${user.profile_image}`,
-            checkout_id: checkOutOrder._id,
-            category: 'order',
-            userId: user, // Assuming 'user' is the field that holds the user ID in your order model
-        });
-        
-        
-        const adminNotifications = await AdminNotification.find({category: 'order'}).sort({ createdAt: -1 });
-    
-        io.emit('createOrder', {adminNotifications});
-
-
-        res.status(StatusCodes.CREATED).json({ msg: 'Orders checked out successfully', checkOutOrder, adminNotification });
-    } catch (error) {
-        console.error(error);
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: 'Internal Server Error' });
+    if (!user) {
+        throw new CustomError.NotFoundError('User not found');
     }
+
+    const { orders } = req.body;
+
+    if (!orders || !Array.isArray(orders) || orders.length === 0) {
+        throw new CustomError.BadRequestError('Invalid or empty orders array');
+    }
+
+    const orderIds = orders.map(order => order._id);
+
+
+
+    //use find to get the updated orders
+    const updatedOrders = await Order.find({ _id: { $in: orderIds } });
+
+    //validation for stocks
+    for (const order of updatedOrders) {
+        for (const item of order.orderItems) {
+
+            const productDetails = await Product.findById(item.product);
+            if (!productDetails) {
+                throw new CustomError.NotFoundError('Product not found');
+            }
+
+            if (!productDetails.categories) {
+                throw new CustomError.BadRequestError('Categories not defined for the product');
+            }
+        
+            const category = productDetails.categories.find(cat => cat.ctgy_selection === item.ctgy_selection);
+            if (!category) {
+                throw new CustomError.BadRequestError('Category not found for the product');
+            }
+
+            const initialStock = category.ctgy_stocks;
+            if (item.quantity > initialStock) {
+                throw new CustomError.BadRequestError('Cannot add quantity higher than initial stocks');
+            }
+        }
+    }
+    
+    if (!Array.isArray(updatedOrders)) {
+        throw new Error('updatedOrders is not an array');
+    }
+
+    const totalOrders = await Order.aggregate([
+        {
+            $match: { _id: { $in: orderIds.map(id => new mongoose.Types.ObjectId(id)) } },
+        },
+        {
+            $group: {
+                _id: null,
+                total: { $sum: '$total' },
+            },
+        },
+    ]);
+
+    const totalAmount = totalOrders.length > 0 ? totalOrders[0].total : 0;
+    
+
+    const checkOutOrder = await CheckOut.create({
+        referenceId: null,
+        userInfo: [{
+            full_name: user.full_name,
+            school_id: user.school_id,
+            school_email: user.school_email,
+            college_dept: user.college_dept,
+            course: user.course,
+            year: user.year,
+            section: user.section,
+            profile_image: user.profile_image,
+        }],
+        orders: updatedOrders.map(order => ({
+            total: order.total,
+            orderItems: order.orderItems,
+        })),
+        totalAmount,
+        orderDate: new Date(),
+        user: req.user.userId
+    });
+
+    await Order.deleteMany({ _id: { $in: orderIds } });
+
+    const productNames = updatedOrders.map(order => order.orderItems.map(item => item.prod_name).join(', ')).join(', ');
+
+    const adminNotification = await AdminNotification.create({
+        title: `${user.full_name} just placed an order`,
+        message: `${productNames}`,
+        profile: `${user.profile_image}`,
+        checkout_id: checkOutOrder._id,
+        category: 'order',
+        userId: user,
+    });
+    
+    
+    const adminNotifications = await AdminNotification.find({category: 'order'}).sort({ createdAt: -1 });
+
+    io.emit('createOrder', {adminNotifications});
+
+
+    res.status(StatusCodes.CREATED).json({ msg: 'Orders checked out successfully', checkOutOrder, adminNotification });
+  
 };
 
 

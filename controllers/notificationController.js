@@ -8,32 +8,39 @@ const moment = require('moment');
 
 
 const getNotifications = async (req, res) => {
+    const { category } = req.query;
+    const queryObject = {};
+
+    if (category) {
+        queryObject.category = category;
+    }
+      
     const userId = req.user.userId;
 
     //delete notif if already 1 week ago
     const oneWeekAgo = moment().subtract(1, 'weeks');
     await Notification.deleteMany({ createdAt: { $lt: oneWeekAgo }, status: 'read' });
     await OrderNotification.deleteMany({ createdAt: { $lt: oneWeekAgo }, status: 'read' });
-    
-  
 
-    //for testing purposes
-    // const twoMinutesAgo = moment().subtract(2, 'minutes');
-    // await Notification.deleteMany({ createdAt: { $lt: twoMinutesAgo }, status: 'read' });
-    // await OrderNotification.deleteMany({ createdAt: { $lt: twoMinutesAgo }, status: 'read' });
+
+    //if already one month and still unread it must also be deleted
+    const oneMonthAgo = moment().subtract(1, 'months');
+    await Notification.deleteMany({ createdAt: { $lt: oneMonthAgo }, status: 'unread' });
+    await OrderNotification.deleteMany({ createdAt: { $lt: oneMonthAgo }, status: 'unread' });
+    
 
 
     const userNotifications = await OrderNotification.find({userId}).sort({ createdAt: -1 });
     const usercountUnread = await OrderNotification.find({userId, status: 'unread' });
     
    
-    const notifications = await Notification.find({}).sort({createdAt: -1})
-    const countUnread = await Notification.find({status: 'unread'})
+    const notifications = await Notification.find(queryObject).sort({createdAt: -1})
+    const countUnread = await Notification.countDocuments(queryObject, {status: 'unread'})
 
     
     const totalnotif = countUnread.length + usercountUnread.length
 
-    res.status(StatusCodes.OK).json({ notifications, userNotifications, count: countUnread.length, usercount: usercountUnread.length, totalnotif});
+    res.status(StatusCodes.OK).json({ notifications, userNotifications, count: countUnread, usercount: usercountUnread.length, totalnotif});
  
 };
 
@@ -44,8 +51,11 @@ const getAdminNotification = async(req, res) => {
     //delete notif if already 1 week ago
     const oneWeekAgo = moment().subtract(1, 'weeks');
     await AdminNotification.deleteMany({ createdAt: { $lt: oneWeekAgo }, status: 'read' });
-  
- 
+    
+
+    //if already one month and still unread it must also be deleted
+    const oneMonthAgo = moment().subtract(1, 'months');
+    await AdminNotification.deleteMany({ createdAt: { $lt: oneMonthAgo }, status: 'unread' });
 
     //for testing purposes
     // const twoMinutesAgo = moment().subtract(5, 'minutes');
