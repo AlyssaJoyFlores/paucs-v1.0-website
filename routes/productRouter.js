@@ -17,7 +17,8 @@ const {
     updateProduct,
     deleteProduct,
     uploadProdImage,
-    updateProdImage
+    updateProdImage,
+    searchProduct
 } = require('../controllers/productController')
 
 const {
@@ -32,7 +33,7 @@ router.route('/uploadProdImage').post([authenticateUser, authorizePermissions('a
 
 router.route('/addProduct').post([authenticateUser, authorizePermissions('admin')], addProduct);
 
-
+router.route('/productSearch/:college_dept').get(authenticateUser, searchProduct)
 router.route('/getUserProducts/:college_dept').get(getAllProductsUser);
 router.route('/getSingleProduct/:id').get(getSingleProduct);
 router.route('/updateProdImage/:id').post([authenticateUser, authorizePermissions('admin')],updateProdImage);

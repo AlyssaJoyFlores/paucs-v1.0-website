@@ -462,6 +462,55 @@ const updateProdImage = async(req, res)=> {
 }
 
 
+
+
+const searchProduct = async(req, res) => {
+  //insert pagination
+ const page = parseInt(req.query.page) || 1;
+ const pageSize = parseInt(req.query.pageSize) || 12;
+ const skip = (page - 1) * pageSize;
+
+ 
+ const {search} = req.query
+ const queryObject = {}
+
+ const userCollegeDept = req.params.college_dept
+
+ // Include 'PHINMA AU SOUTH' and the user's college department in the query
+ const departmentQuery = {
+   $or: [
+     { prod_department: userCollegeDept },
+     { prod_department: 'PHINMA AU SOUTH' }
+   ]
+ };
+
+ if(search){
+   queryObject.prod_name = {$regex: search, $options: 'i'};
+ }
+
+
+
+ // Merge the search query and department query
+ const finalQuery = { ...queryObject, ...departmentQuery };
+
+ let products = await Product.find(finalQuery)
+ .collation({ locale: 'en', strength: 2 })
+ .sort('prod_name')
+ .skip(skip)
+ .limit(pageSize)
+ .exec()
+
+ let searchTotal = await Product.find(finalQuery)
+
+
+ if(searchTotal.length === 0) {
+   throw new CustomError.NotFoundError(`No results found for search: ${search}`)
+ }
+
+
+ res.status(StatusCodes.OK).json({products, countSearch: searchTotal.length})
+}
+
 module.exports = {
   getAllProductsAdmin,
   getAllProductsUser,
@@ -472,5 +521,6 @@ module.exports = {
   updateProduct,
   deleteProduct,
   uploadProdImage,
-  updateProdImage
+  updateProdImage,
+  searchProduct
 }
