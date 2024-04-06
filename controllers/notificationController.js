@@ -31,16 +31,18 @@ const getNotifications = async (req, res) => {
 
 
     const userNotifications = await OrderNotification.find({userId}).sort({ createdAt: -1 });
-    const usercountUnread = await OrderNotification.find({userId, status: 'unread' });
+    const usercountUnread = await OrderNotification.countDocuments({userId, status: 'unread' });
     
    
     const notifications = await Notification.find(queryObject).sort({createdAt: -1})
     const countUnread = await Notification.countDocuments(queryObject, {status: 'unread'})
 
     
-    const totalnotif = countUnread.length + usercountUnread.length
+    //const totalnotif = countUnread.length + usercountUnread.length
+    const totalnotif = usercountUnread + countUnread
 
-    res.status(StatusCodes.OK).json({ notifications, userNotifications, count: countUnread, usercount: usercountUnread.length, totalnotif});
+
+    res.status(StatusCodes.OK).json({ notifications, userNotifications, count: countUnread, usercount: usercountUnread, totalnotif});
  
 };
 

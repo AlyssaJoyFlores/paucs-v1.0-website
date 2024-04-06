@@ -210,13 +210,15 @@ const deleteAnnouncement = async (req, res) => {
 
 // to upload image in cloudinary
 const uploadAnnImage = async(req, res) => {
-    if (!req.files || !req.files.image) {
-        return res.status(200).json({ message: 'announcement without image' });
-    }
-
+    
     //validation for image
     if (!req.files.image.mimetype.startsWith('image')) {
         throw new CustomError.BadRequestError('Please Upload Image File Type Only');
+    }
+
+
+    if (!req.files || !req.files.image) {
+        return res.status(200).json({ message: 'announcement without image' });
     }
 
     const result = await cloudinary.uploader.upload(req.files.image.tempFilePath, {
@@ -248,15 +250,15 @@ const uploadUpdateAnnImage = async (req, res) => {
         console.error("Error deleting existing image from Cloudinary:", error);
     }
 
-    if (!req.files || !req.files.image) {
-        return res.status(200).json({ message: 'announcement without image' });
-    }
-
+    
     //validation for image
     if (!req.files.image.mimetype.startsWith('image')) {
         throw new CustomError.BadRequestError('Please Upload Image File Type Only');
     }
 
+    if (!req.files || !req.files.image) {
+        return res.status(200).json({ message: 'announcement without image' });
+    }
 
     const result = await cloudinary.uploader.upload(req.files.image.tempFilePath, {
         use_filename: true,
