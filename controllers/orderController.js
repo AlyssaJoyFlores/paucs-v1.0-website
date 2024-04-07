@@ -74,7 +74,7 @@ const addToCart = async (req, res) => {
             );
         }
 
-        let { prod_name, prod_department, image, prod_price, _id, prod_benefits} = dbProduct;
+        let { prod_name, prod_department, prod_desc, image, prod_price, _id, prod_benefits} = dbProduct;
 
         // Check ctgy_stocks
         const category = dbProduct.categories.find(
@@ -116,6 +116,7 @@ const addToCart = async (req, res) => {
             quantity: item.quantity,
             prod_name,
             prod_department,
+            prod_desc,
             prod_price,
             prod_benefits,
             isVoucherApplied: item.isVoucherApplied,

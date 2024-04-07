@@ -3,6 +3,7 @@ const Announcement = require('../models/announcementModel')
 
 const Policy = require('../models/policyModel')
 const {Order, CheckOut} = require('../models/orderModel')
+const {HelpSupport} = require('../models/infoModel')
 
 const User = require('../models/usersModel')
 
@@ -19,9 +20,9 @@ const overallSearchAdmin = async (req, res) => {
             { prod_name: { $regex: search, $options: 'i' } },
             { anncmnt_title: { $regex: search, $options: 'i' } },
             { anncmt_description: { $regex: search, $options: 'i' } },
-            { steps: { $regex: search, $options: 'i' } },
+            { title: { $regex: search, $options: 'i' } },
             { description: { $regex: search, $options: 'i' } },
-            { full_name: { $regex: search, $options: 'i' } }, // Added user search criteria
+            { full_name: { $regex: search, $options: 'i' } },
             { school_id: { $regex: search, $options: 'i' } }
         ];
     }
@@ -66,13 +67,13 @@ const overallSearchAdmin = async (req, res) => {
         })
     );
 
-    const [announcements, policies, users] = await Promise.all([
+    const [announcements, helpsupports, users] = await Promise.all([
         Announcement.find(queryObject).collation({ locale: 'en', strength: 2 }).exec(),
-        Policy.find(queryObject).collation({ locale: 'en', strength: 2 }).exec(),
+        HelpSupport.find(queryObject).collation({ locale: 'en', strength: 2 }).exec(),
         User.find(queryObject).collation({ locale: 'en', strength: 2 }).exec(),
     ]);
 
-    const totalCount = productsWithTotalCtgyStocksAndSales.length + announcements.length + policies.length + users.length;
+    const totalCount = productsWithTotalCtgyStocksAndSales.length + announcements.length + helpsupports.length + users.length;
 
     const searchResults = {
         products: {
@@ -83,9 +84,9 @@ const overallSearchAdmin = async (req, res) => {
             results: announcements,
             count: announcements.length,
         },
-        policies: {
-            results: policies,
-            count: policies.length,
+        helpsupports: {
+            results: helpsupports,
+            count: helpsupports.length,
         },
         users: {
             results: users,

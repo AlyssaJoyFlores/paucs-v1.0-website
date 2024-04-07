@@ -39,6 +39,9 @@ const SingleCartItemsSchema = new mongoose.Schema({
         enum: ['CITE', 'CMA', 'CCJE', 'CAS', 'SHS', 'PHINMA AU SOUTH'],
         default: 'PHINMA AU SOUTH'
     },
+    prod_desc: {
+        type: String,
+    },
     image: {
         type: String,
     },

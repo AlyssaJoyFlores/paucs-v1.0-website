@@ -49,6 +49,7 @@ const getAllInventory = async (req, res) => {
           total_ctgy_stocks: product.categories.reduce((acc, category) => acc + category.ctgy_stocks, 0),
           total_to_acquire: totalToAcquire,
           total_completed: totalCompleted,
+          productId: product._id
         };
   
         productInventory.push(productInfo);
