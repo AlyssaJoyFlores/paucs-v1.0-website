@@ -10,7 +10,6 @@ const User = require('../models/usersModel')
 const { StatusCodes } = require('http-status-codes');
 const CustomError = require('../errors');
 
-
 const overallSearchAdmin = async (req, res) => {
     const { search } = req.query;
     const queryObject = {};
@@ -20,10 +19,8 @@ const overallSearchAdmin = async (req, res) => {
             { prod_name: { $regex: search, $options: 'i' } },
             { anncmnt_title: { $regex: search, $options: 'i' } },
             { anncmt_description: { $regex: search, $options: 'i' } },
-            { title: { $regex: search, $options: 'i' } },
+            { steps: { $regex: search, $options: 'i' } },
             { description: { $regex: search, $options: 'i' } },
-            { full_name: { $regex: search, $options: 'i' } },
-            { school_id: { $regex: search, $options: 'i' } }
         ];
     }
 
@@ -67,13 +64,12 @@ const overallSearchAdmin = async (req, res) => {
         })
     );
 
-    const [announcements, helpsupports, users] = await Promise.all([
+    const [announcements, policies] = await Promise.all([
         Announcement.find(queryObject).collation({ locale: 'en', strength: 2 }).exec(),
-        HelpSupport.find(queryObject).collation({ locale: 'en', strength: 2 }).exec(),
-        User.find(queryObject).collation({ locale: 'en', strength: 2 }).exec(),
+        Policy.find(queryObject).collation({ locale: 'en', strength: 2 }).exec(),
     ]);
 
-    const totalCount = productsWithTotalCtgyStocksAndSales.length + announcements.length + helpsupports.length + users.length;
+    const totalCount = productsWithTotalCtgyStocksAndSales.length + announcements.length + policies.length;
 
     const searchResults = {
         products: {
@@ -84,25 +80,23 @@ const overallSearchAdmin = async (req, res) => {
             results: announcements,
             count: announcements.length,
         },
-        helpsupports: {
-            results: helpsupports,
-            count: helpsupports.length,
-        },
-        users: {
-            results: users,
-            count: users.length
+        policies: {
+            results: policies,
+            count: policies.length,
         },
         totalCount: totalCount,
     };
 
     // Check if totalCount is 0
     if (totalCount === 0) {
-        throw new CustomError.NotFoundError(`No results found for search: ${search}`);
+        throw new CustomError.NotFoundError('No results found for search: ${search}');
     }
 
     res.status(StatusCodes.OK).json(searchResults);
   
-};
+}
+
+
 
 
 const overallSearchStudent = async (req, res) => {
@@ -130,7 +124,7 @@ const overallSearchStudent = async (req, res) => {
                     { prod_department: userCollegeDept },
                     { prod_department: 'PHINMA AU SOUTH' }
                 ]
-            }
+            },
         ]
     })
         .collation({ locale: 'en', strength: 2 })
