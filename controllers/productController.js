@@ -401,9 +401,9 @@ const deleteProduct = async(req, res)=> {
 //MULTIPLE IMAGES
 const uploadProdImage = async (req, res) => {
   // Check if req.files.image exists and handle both single and multiple file uploads
-  if (!req.files || (Array.isArray(req.files.image) && req.files.image.length === 0)) {
-    return res.status(StatusCodes.BAD_REQUEST).json({ error: 'No images found in the request' });
-  }
+  // if (!req.files || (Array.isArray(req.files.image) && req.files.image.length === 0)) {
+  //   return res.status(StatusCodes.BAD_REQUEST).json({ error: 'No images found in the request' });
+  // }
 
 
   // Handle single file upload
