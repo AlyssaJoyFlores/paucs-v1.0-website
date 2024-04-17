@@ -1,4 +1,5 @@
 const User = require('../models/usersModel')
+const AdminLog = require('../models/adminLogModel')
 const cloudinary = require('cloudinary').v2;
 const fs = require('fs')
 const crypto = require('crypto')
@@ -10,6 +11,40 @@ const UAParser = require('ua-parser-js');
 const os = require('os')
 
 
+const archivedUser = async(req, res) => {
+    
+  const user = await User.findById(req.params.id);
+
+  if (!user) {
+      throw new CustomError.NotFoundError('No help support found')
+  }
+
+  const updateUser = await User.findByIdAndUpdate(
+      req.params.id,
+      req.body,
+      {new:true}
+  )
+
+  if(updateUser.isArchived === true) {
+      req.logAction = 'Archived User';
+      req.action = 'archived'
+  } 
+
+  if(updateUser.isArchived === false) {
+      req.logAction = 'Unarchived User';
+      req.action = 'unarchived'
+  }
+
+  
+  await AdminLog.create({
+      user: req.user.full_name,
+      action: `${req.user.full_name} ${req.logAction}`,
+      content: `Size Chart: ${user.full_name} has been ${req.action}`
+  })
+
+
+  res.status(StatusCodes.OK).json({updateUser})
+}
 
 const getAllUsers = async(req, res) => {
 const page = parseInt(req.query.page) || 1;
@@ -19,7 +54,13 @@ const page = parseInt(req.query.page) || 1;
   const { college_dept, course, year, isOrfVerified } = req.query;
   const searchQuery = req.query.search;
 
+  
   const filterConditions = {};
+
+  if(req.query.isArchived) {
+    filterConditions.isArchived = req.query.isArchived === 'true'
+  }
+
   if (college_dept) filterConditions.college_dept = college_dept;
   if (course) filterConditions.course = course;
   if (year) filterConditions.year = year;
@@ -38,15 +79,17 @@ const page = parseInt(req.query.page) || 1;
 
 
 
-  const users = await User.find({ role: 'student', ...filterConditions })
+  const users = await User.find({...filterConditions })
     .select('-password')
     .sort({ full_name: 1 })
     .skip(skip)
     .limit(pageSize)
+    .where('role')
+    .equals('student')
     .exec();
 
     const overAllUser = await User.countDocuments();
-    const totalUser = await User.countDocuments(filterConditions);
+    const totalUser = users.length
     const totalPages = Math.ceil(totalUser / pageSize);
 
   res.status(StatusCodes.OK).json({ users, overAllUser, totalUser, totalPages });
@@ -62,6 +105,12 @@ const searchUsers = async (req, res) => {
   const searchQuery = req.query.search;
 
   const filterConditions = {};
+
+  
+  if(req.query.isArchived) {
+    filterConditions.isArchived = req.query.isArchived === 'true'
+  }
+
   if (college_dept) filterConditions.college_dept = college_dept;
   if (course) filterConditions.course = course;
 
@@ -72,9 +121,7 @@ const searchUsers = async (req, res) => {
     ];
   }
 
-  const overAllUser = await User.countDocuments();
-  const totalUser = await User.countDocuments(filterConditions);
-  const totalPages = Math.ceil(totalUser / pageSize);
+  
 
   const users = await User.find({ role: 'student', ...filterConditions })
     .select('-password')
@@ -83,6 +130,10 @@ const searchUsers = async (req, res) => {
     .limit(pageSize)
     .exec();
 
+  const overAllUser = await User.countDocuments();
+  const totalUser = users.length
+  const totalPages = Math.ceil(totalUser / pageSize);
+  
   res.status(StatusCodes.OK).json({ users, overAllUser, totalUser, totalPages });
 
 };
@@ -613,6 +664,7 @@ const verifiedMultipleOrf = async (req, res) => {
 
 
 module.exports = {
+  archivedUser,
   getAllUsers,
   getSingleUser,
   showCurrentUser,

@@ -15,6 +15,7 @@ const {
     getSingleProduct,
     addProduct,
     updateProduct,
+    deleteProdImage,
     deleteProduct,
     uploadProdImage,
     updateProdImage,
@@ -30,6 +31,8 @@ router.route('/getAdminProducts').get(getAllProductsAdmin);
 router.route('/productLanding').get(productLanding);
 
 router.route('/uploadProdImage').post([authenticateUser, authorizePermissions('admin')], uploadProdImage);
+
+router.route('/delete-image').delete([authenticateUser, authorizePermissions('admin')], deleteProdImage);
 
 router.route('/addProduct').post([authenticateUser, authorizePermissions('admin')], addProduct);
 
@@ -47,6 +50,7 @@ router.route('/deleteProduct/:id').delete([authenticateUser, authorizePermission
 
 
 router.route('/:id/review').get(authenticateUser, getSingleProductReview)
+
 
 
 module.exports = router

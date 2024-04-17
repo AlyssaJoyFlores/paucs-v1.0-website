@@ -7,6 +7,7 @@ const {authenticateUser, authorizePermissions} = require('../middleware/authenti
 // const {authenticateUser, authorizeRoles} = require('../middleware/full-auth')
 
 const {
+    archivedUser,
     getAllUsers,
     getSingleUser,
     showCurrentUser,
@@ -32,6 +33,7 @@ router.route('/updateUser/:id').patch(authenticateUser, updateUser)
 router.route('/deleteUser/:id').delete([authenticateUser, authorizePermissions('admin')], deleteUser)
 router.route('/verifiedOrf/:id').patch(authenticateUser, verifiedOrf)
 router.route('/singleUser/:id').get(authenticateUser, getSingleUser)
+router.route('/archivedUser/:id').patch([authenticateUser, authorizePermissions('admin')], archivedUser)
 
 
 

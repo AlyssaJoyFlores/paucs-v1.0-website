@@ -20,9 +20,9 @@ const ProductSchema = new mongoose.Schema({
         type: String,
         enum: ['NEW', 'OLD', 'SOLD OUT']
     },
-    image: {
-        type: String,
-    },
+    image: [{
+        type: Object,
+    }],
     prod_name: {
         type: String,
         required: true

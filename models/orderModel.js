@@ -42,9 +42,9 @@ const SingleCartItemsSchema = new mongoose.Schema({
     prod_desc: {
         type: String,
     },
-    image: {
-        type: String,
-    },
+    image: [{
+        type: Object,
+    }],
     prod_price: {
         type: Number,
         required: true

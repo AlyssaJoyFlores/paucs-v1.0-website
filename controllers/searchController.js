@@ -10,17 +10,26 @@ const User = require('../models/usersModel')
 const { StatusCodes } = require('http-status-codes');
 const CustomError = require('../errors');
 
+
+
 const overallSearchAdmin = async (req, res) => {
     const { search } = req.query;
     const queryObject = {};
+
+    if(req.query.isArchived) {
+        queryObject.isArchived = req.query.isArchived === 'true'
+    }
+
 
     if (search) {
         queryObject.$or = [
             { prod_name: { $regex: search, $options: 'i' } },
             { anncmnt_title: { $regex: search, $options: 'i' } },
             { anncmt_description: { $regex: search, $options: 'i' } },
-            { steps: { $regex: search, $options: 'i' } },
+            { title: { $regex: search, $options: 'i' } },
             { description: { $regex: search, $options: 'i' } },
+            { full_name: { $regex: search, $options: 'i' } },
+            { school_id: { $regex: search, $options: 'i' } }
         ];
     }
 
@@ -64,12 +73,13 @@ const overallSearchAdmin = async (req, res) => {
         })
     );
 
-    const [announcements, policies] = await Promise.all([
-        Announcement.find(queryObject).collation({ locale: 'en', strength: 2 }).exec(),
-        Policy.find(queryObject).collation({ locale: 'en', strength: 2 }).exec(),
+    const [announcements, helpsupports, users] = await Promise.all([
+        Announcement.find(queryObject).collation({ locale: 'en', strength: 2}).exec(),
+        HelpSupport.find(queryObject).collation({ locale: 'en', strength: 2 }).exec(),
+        User.find(queryObject).collation({ locale: 'en', strength: 2 }).where('role').equals('student').exec(),
     ]);
 
-    const totalCount = productsWithTotalCtgyStocksAndSales.length + announcements.length + policies.length;
+    const totalCount = productsWithTotalCtgyStocksAndSales.length + announcements.length + helpsupports.length + users.length;
 
     const searchResults = {
         products: {
@@ -80,23 +90,25 @@ const overallSearchAdmin = async (req, res) => {
             results: announcements,
             count: announcements.length,
         },
-        policies: {
-            results: policies,
-            count: policies.length,
+        helpsupports: {
+            results: helpsupports,
+            count: helpsupports.length,
+        },
+        users: {
+            results: users,
+            count: users.length
         },
         totalCount: totalCount,
     };
 
     // Check if totalCount is 0
     if (totalCount === 0) {
-        throw new CustomError.NotFoundError('No results found for search: ${search}');
+        throw new CustomError.NotFoundError(`No results found for search: ${search}`);
     }
 
     res.status(StatusCodes.OK).json(searchResults);
   
-}
-
-
+};
 
 
 const overallSearchStudent = async (req, res) => {
@@ -104,6 +116,10 @@ const overallSearchStudent = async (req, res) => {
     const userCollegeDept = req.params.college_dept; // Assuming college_dept is a parameter in the route
 
     const queryObject = {};
+
+    if(req.query.isArchived) {
+        queryObject.isArchived = req.query.isArchived === 'true'
+    }
 
     if (search) {
         queryObject.$or = [

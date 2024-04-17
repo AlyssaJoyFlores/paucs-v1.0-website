@@ -32,7 +32,8 @@ const createTokenUser = (user) => {
         enrollmentStart: user.enrollmentStart,
         verificationStart: user.verificationStart,
         verificationEnd: user.verificationEnd,
-        isUserTest: user.isUserTest
+        isUserTest: user.isUserTest,
+        isArchived: user.isArchived,
     }
 }
 

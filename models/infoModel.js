@@ -6,6 +6,10 @@ const AboutSchema = new mongoose.Schema({
     },
     about_description: {
         type: String
+    },
+    isArchived: {
+        type: Boolean,
+        default: false
     }
 }, {timestamps: true})
 
@@ -25,7 +29,11 @@ const SizeChartSchema = new mongoose.Schema({
         size_name: String,
         width: String,
         length: String
-    }]
+    }],
+    isArchived: {
+        type: Boolean,
+        default: false
+    }
 
 },{timestamps: true})
 
@@ -38,7 +46,11 @@ const HelpSupportSchema = new mongoose.Schema({
         steps_num: Number,
         steps_title: String,
         steps_desc: String 
-    }]
+    }],
+    isArchived: {
+        type: Boolean,
+        default: false
+    }
 }, {timestamps: true})
 
 
@@ -48,6 +60,10 @@ const TermsSchema = new mongoose.Schema({
     },
     term_description: {
         type: String
+    },
+    isArchived: {
+        type: Boolean,
+        default: false
     }
 },{timestamps: true})
 
@@ -58,6 +74,10 @@ const PrivacySchema = new mongoose.Schema({
     },
     privacy_description: {
         type: String
+    },
+    isArchived: {
+        type: Boolean,
+        default: false
     }
 },{timestamps: true})
 

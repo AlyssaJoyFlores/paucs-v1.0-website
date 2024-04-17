@@ -10,14 +10,15 @@ const sendLoginAttempEmail = async({name, school_email, token, origin, dateLog, 
     
      const allow = `${origin}/manage-device?action=allow&userAgent=${encodeURIComponent(userAgent)}&deviceUse=${encodeURIComponent(deviceUse)}&cpuUse=${encodeURIComponent(cpuUse)}&browserUse=${encodeURIComponent(browserUse)}&school_id=${school_id}&osUse=${encodeURIComponent(osUse)}&deviceType=${encodeURIComponent(deviceType)}`
 
-      const blockUrl = `${origin}/manage-device?action=block&userAgent=${encodeURIComponent(userAgent)}&deviceUse=${encodeURIComponent(deviceUse)}&cpuUse=${encodeURIComponent(cpuUse)}&browserUse=${encodeURIComponent(browserUse)}&school_id=${school_id}&osUse=${encodeURIComponent(osUse)}&deviceType=${encodeURIComponent(deviceType)}`;
+    const blockUrl = `${origin}/manage-device?action=block&userAgent=${encodeURIComponent(userAgent)}&deviceUse=${encodeURIComponent(deviceUse)}&cpuUse=${encodeURIComponent(cpuUse)}&browserUse=${encodeURIComponent(browserUse)}&school_id=${school_id}&osUse=${encodeURIComponent(osUse)}&deviceType=${encodeURIComponent(deviceType)}`;
     // const allow = `${origin}/manage-device?action=allow&userAgent=${encodeURIComponent(userAgent)}&deviceUse=${encodeURIComponent(deviceUse)}&school_id=${school_id}&cpuUse=${encodeURIComponent(cpuUse)}`;
 
     const attempMessage = `
     <div style='background-color:white; padding:1rem; width:90%; margin:auto; font-family:"Trebuchet MS";'>
         <div style="text-align:center; margin-top:1rem;">
-            <p style="color:gray; font-size:15px; margin:0;">Hi ${name}, A log in attempt from unrecognized device detected on your account on ${dateLog} using ${userAgent} and device ${deviceUse} and browser ${browserUse} and os ${osUse} and cpu ${cpuUse} and deviceType ${deviceType}</p>
-            <p>If this was not you, you can block this device by clicking the button below:</p>
+            <p style="color:gray; font-size:15px; margin:0;">Hi ${name}, A log in attempt from unrecognized device detected on your account on ${dateLog} using ${userAgent}, device ${deviceUse},browser ${browserUse}, os ${osUse}, cpu ${cpuUse} and deviceType ${deviceType}</p>
+
+            <p>If this was not you, you can block this device by clicking the block button below:</p>
             <a href="${blockUrl}" style="display: inline-block; background-color: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Block Device</a>
             <a href="${allow}" style="display: inline-block; background-color: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Allow Device</a>
         </div>

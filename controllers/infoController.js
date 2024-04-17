@@ -1,4 +1,5 @@
 const {  About, SizeChart, Terms, Privacy, HelpSupport } = require('../models/infoModel')
+const AdminLog = require('../models/adminLogModel')
 const {Notification} = require('../models/notificationModel')
 const CustomError = require('../errors')
 const {StatusCodes} = require('http-status-codes')
@@ -8,7 +9,12 @@ const fs = require('fs')
 
 
 const getAbout = async(req, res) => {
-    const about = await About.find({})
+
+    let  queryObject = {}
+    if(req.query.isArchived) {
+        queryObject.isArchived = req.query.isArchived === 'true'
+    }
+    const about = await About.find(queryObject)
     res.status(StatusCodes.OK).json({msg: 'get about page', about})
 }
 
@@ -59,12 +65,50 @@ const deleteAbout = async(req, res) => {
     res.status(StatusCodes.OK).json({msg: 'delete about', about})
 }
 
+const archivedAbout = async(req, res) => {
+    
+    const about = await About.findById(req.params.id);
+
+    if (!about) {
+        throw new CustomError.NotFoundError('No about found')
+    }
+
+    const updateAbout = await About.findByIdAndUpdate(
+        req.params.id,
+        req.body,
+        {new:true}
+    )
+
+    if(updateAbout.isArchived === true) {
+        req.logAction = 'Archived About';
+        req.action = 'archived'
+    } 
+
+    if(updateAbout.isArchived === false) {
+        req.logAction = 'Unarchived About';
+        req.action = 'unarchived'
+    }
+
+    
+    await AdminLog.create({
+        user: req.user.full_name,
+        action: `${req.user.full_name} ${req.logAction}`,
+        content: `About: ${about.about_title} has been ${req.action}`
+    })
+
+
+    res.status(StatusCodes.OK).json({updateAbout})
+}
 
 //========================================================================================
 
 
 const getSizeChart = async(req, res) => {
-    const sizeChart = await SizeChart.find({})
+    let  queryObject = {}
+    if(req.query.isArchived) {
+        queryObject.isArchived = req.query.isArchived === 'true'
+    }
+    const sizeChart = await SizeChart.find(queryObject)
     res.status(StatusCodes.OK).json({msg: 'get size chart', sizeChart})
 }
 
@@ -193,11 +237,49 @@ const updateSizeChartImage = async(req, res) => {
     return res.status(StatusCodes.OK).json({ image: { src: result.secure_url } });
 }
 
+const archivedSizeChart = async(req, res) => {
+    
+    const size = await SizeChart.findById(req.params.id);
+
+    if (!size) {
+        throw new CustomError.NotFoundError('No size chart found')
+    }
+
+    const updateSizeChart = await SizeChart.findByIdAndUpdate(
+        req.params.id,
+        req.body,
+        {new:true}
+    )
+
+    if(updateSizeChart.isArchived === true) {
+        req.logAction = 'Archived Size Chart';
+        req.action = 'archived'
+    } 
+
+    if(updateSizeChart.isArchived === false) {
+        req.logAction = 'Unarchived Size Chart';
+        req.action = 'unarchived'
+    }
+
+    
+    await AdminLog.create({
+        user: req.user.full_name,
+        action: `${req.user.full_name} ${req.logAction}`,
+        content: `Size Chart: ${size.chart_title} has been ${req.action}`
+    })
+
+
+    res.status(StatusCodes.OK).json({updateSizeChart})
+}
 
 //================================================================================================
 
 const getTerms = async(req, res) => {
-    const terms = await Terms.find({})
+    let  queryObject = {}
+    if(req.query.isArchived) {
+        queryObject.isArchived = req.query.isArchived === 'true'
+    }
+    const terms = await Terms.find(queryObject)
     res.status(StatusCodes.OK).json({msg: 'get about page', terms})
 }
 
@@ -249,9 +331,49 @@ const deleteTerms  = async(req, res) => {
 }
 
 
+const archivedTerms = async(req, res) => {
+    
+    const terms = await Terms.findById(req.params.id);
+
+    if (!terms) {
+        throw new CustomError.NotFoundError('No terms found')
+    }
+
+    const updateTerms = await Terms.findByIdAndUpdate(
+        req.params.id,
+        req.body,
+        {new:true}
+    )
+
+    if(updateTerms.isArchived === true) {
+        req.logAction = 'Archived Terms';
+        req.action = 'archived'
+    } 
+
+    if(updateTerms.isArchived === false) {
+        req.logAction = 'Unarchived Terms';
+        req.action = 'unarchived'
+    }
+
+    
+    await AdminLog.create({
+        user: req.user.full_name,
+        action: `${req.user.full_name} ${req.logAction}`,
+        content: `Size Chart: ${terms.term_title} has been ${req.action}`
+    })
+
+
+    res.status(StatusCodes.OK).json({updateTerms})
+}
+
+
 //================================================================================================
 const getPrivacy = async(req, res) => {
-    const privacy = await Privacy.find({})
+    let  queryObject = {}
+    if(req.query.isArchived) {
+        queryObject.isArchived = req.query.isArchived === 'true'
+    }
+    const privacy = await Privacy.find(queryObject)
     res.status(StatusCodes.OK).json({msg: 'get privacy', privacy})
 }
 
@@ -302,9 +424,50 @@ const deletePrivacy  = async(req, res) => {
     res.status(StatusCodes.OK).json({msg: 'delete privacy', privacy})
 }
 
+
+const archivedPrivacy = async(req, res) => {
+    
+    const privacy = await Privacy.findById(req.params.id);
+
+    if (!privacy) {
+        throw new CustomError.NotFoundError('No terms found')
+    }
+
+    const updatePrivacy = await Privacy.findByIdAndUpdate(
+        req.params.id,
+        req.body,
+        {new:true}
+    )
+
+    if(updatePrivacy.isArchived === true) {
+        req.logAction = 'Archived Terms';
+        req.action = 'archived'
+    } 
+
+    if(updatePrivacy.isArchived === false) {
+        req.logAction = 'Unarchived Terms';
+        req.action = 'unarchived'
+    }
+
+    
+    await AdminLog.create({
+        user: req.user.full_name,
+        action: `${req.user.full_name} ${req.logAction}`,
+        content: `Size Chart: ${privacy.privacy_title} has been ${req.action}`
+    })
+
+
+    res.status(StatusCodes.OK).json({updatePrivacy})
+}
+
+
 //================================================================
 const getHelpSupport = async(req, res) => {
-    const helpSupport = await HelpSupport.find({})
+    let  queryObject = {}
+    if(req.query.isArchived) {
+        queryObject.isArchived = req.query.isArchived === 'true'
+    }
+    const helpSupport = await HelpSupport.find(queryObject)
     res.status(StatusCodes.OK).json({msg: 'Get Help Support Page', helpSupport})
 }
 
@@ -370,6 +533,40 @@ const deleteHelpSupport = async(req, res) => {
     res.status(StatusCodes.OK).json({msg: 'delete about', helpSupport})
 }
 
+const archivedHelpSupport = async(req, res) => {
+    
+    const support = await HelpSupport.findById(req.params.id);
+
+    if (!support) {
+        throw new CustomError.NotFoundError('No help support found')
+    }
+
+    const updateHelpSupport = await HelpSupport.findByIdAndUpdate(
+        req.params.id,
+        req.body,
+        {new:true}
+    )
+
+    if(updateHelpSupport.isArchived === true) {
+        req.logAction = 'Archived Help Support';
+        req.action = 'archived'
+    } 
+
+    if(updateHelpSupport.isArchived === false) {
+        req.logAction = 'Unarchived Help Support';
+        req.action = 'unarchived'
+    }
+
+    
+    await AdminLog.create({
+        user: req.user.full_name,
+        action: `${req.user.full_name} ${req.logAction}`,
+        content: `Size Chart: ${support.title} has been ${req.action}`
+    })
+
+
+    res.status(StatusCodes.OK).json({updateHelpSupport})
+}
 
 
 
@@ -378,22 +575,27 @@ module.exports = {
     createAbout,
     updateAbout,
     deleteAbout,
+    archivedAbout,
     getSizeChart,
     createSizeChart,
     updateSizeChart,
     deleteSizeChart,
     uploadSizeChartImage,
     updateSizeChartImage,
+    archivedSizeChart,
     getTerms,
     createTerms,
     updateTerms,
     deleteTerms,
+    archivedTerms,
     getPrivacy,
     createPrivacy,
     updatePrivacy,
     deletePrivacy,
     getHelpSupport,
+    archivedPrivacy,
     createHelpSupport,
     updateHelpSupport,
-    deleteHelpSupport
+    deleteHelpSupport,
+    archivedHelpSupport
 }

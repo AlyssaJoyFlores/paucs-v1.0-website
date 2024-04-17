@@ -8,24 +8,29 @@ const {
     createAbout,
     updateAbout,
     deleteAbout,
+    archivedAbout,
     getSizeChart,
     createSizeChart,
     updateSizeChart,
     deleteSizeChart,
     uploadSizeChartImage,
     updateSizeChartImage,
+    archivedSizeChart,
     getTerms,
     createTerms,
     updateTerms,
     deleteTerms,
+    archivedTerms,
     getPrivacy,
     createPrivacy,
     updatePrivacy,
     deletePrivacy,
+    archivedPrivacy,
     getHelpSupport,
     createHelpSupport,
     updateHelpSupport,
-    deleteHelpSupport
+    deleteHelpSupport,
+    archivedHelpSupport
 } = require('../controllers/infoController')
 
 // get
@@ -59,4 +64,11 @@ router.route('/deleteTerms/:id').delete([authenticateUser, authorizePermissions(
 router.route('/deletePrivacy/:id').delete([authenticateUser, authorizePermissions('admin')], deletePrivacy)
 router.route('/deleteHelpSupport/:id').delete([authenticateUser, authorizePermissions('admin')], deleteHelpSupport)
 
-module.exports =  router
+//archived
+router.route('/archivedAbout/:id').patch([authenticateUser, authorizePermissions('admin')], archivedAbout)
+router.route('/archivedSizeChart/:id').patch([authenticateUser, authorizePermissions('admin')], archivedSizeChart)
+router.route('/archivedTerms/:id').patch([authenticateUser, authorizePermissions('admin')], archivedTerms)
+router.route('/archivedHelpSupport/:id').patch([authenticateUser, authorizePermissions('admin')], archivedHelpSupport)
+router.route('/archivedPrivacy/:id').patch([authenticateUser, authorizePermissions('admin')], archivedPrivacy)
+
+module.exports = router

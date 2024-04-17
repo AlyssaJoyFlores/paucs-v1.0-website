@@ -174,6 +174,8 @@ const login = async (req, res) => {
         const errorDetails = JSON.stringify(recaptchaResponse.data);
         throw new CustomError.BadRequestError('reCAPTCHA verification failed')
     }
+
+
     
 
     // Check if email and password exist in db
@@ -185,6 +187,12 @@ const login = async (req, res) => {
     const user = await User.findOne({ school_id });
     if (!user) {
         throw new CustomError.UnauthenticatedError('Invalid Credentials');
+    }
+
+    if(user.isArchived === true){
+        throw new CustomError.UnauthorizedError(
+            `Sorry, you are currently not allowed to login. Please contact support for assistance `
+        );
     }
 
    

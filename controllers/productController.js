@@ -381,49 +381,64 @@ const deleteProduct = async(req, res)=> {
 
 
 
-const uploadProdImage = async(req, res)=> {
-    //validation for image
-  if (!req.files.image.mimetype.startsWith('image')) {
-    throw new CustomError.BadRequestError('Please Upload Image File Type Only');
+// const uploadProdImage = async(req, res)=> {
+//     //validation for image
+//   if (!req.files.image.mimetype.startsWith('image')) {
+//     throw new CustomError.BadRequestError('Please Upload Image File Type Only');
+//   }
+
+//   const result = await cloudinary.uploader.upload(req.files.image.tempFilePath, {
+//     use_filename:true,
+//     folder:'product-folder'
+//   })
+
+//   fs.unlinkSync(req.files.image.tempFilePath)
+
+//   return res.status(StatusCodes.OK).json({image:{src:result.secure_url}})
+// }
+
+
+//MULTIPLE IMAGES
+const uploadProdImage = async (req, res) => {
+  // Check if req.files.image exists and handle both single and multiple file uploads
+  if (!req.files || (Array.isArray(req.files.image) && req.files.image.length === 0)) {
+    return res.status(StatusCodes.BAD_REQUEST).json({ error: 'No images found in the request' });
   }
 
-  const result = await cloudinary.uploader.upload(req.files.image.tempFilePath, {
-    use_filename:true,
-    folder:'product-folder'
-  })
 
-  fs.unlinkSync(req.files.image.tempFilePath)
+  // Handle single file upload
+  if (!Array.isArray(req.files.image)) {
+    const result = await cloudinary.uploader.upload(req.files.image.tempFilePath, {
+      use_filename:true,
+      folder: 'product-folder'
+    });
 
-  return res.status(StatusCodes.OK).json({image:{src:result.secure_url}})
-}
+    fs.unlinkSync(req.files.image.tempFilePath);
+    return res.status(StatusCodes.OK).json({ image: { src: result.secure_url } });
+  }
 
+  // Handle multiple file upload
+  if (req.files.image.length > 5) {
+    return res.status(StatusCodes.BAD_REQUEST).json({ error: 'Exceeded the maximum limit of 5 images' });
+  }
 
+  const uploadedImages = [];
+  
+  //  if (!req.files.image.mimetype.startsWith('image')) {
+  //   throw new CustomError.BadRequestError('Please Upload Image File Type Only');
+  // }
 
-// const uploadProdImage = async (req, res) => {
-//   try {
-//       // Check if req.files.image is an array and contains files
-//       if (!Array.isArray(req.files.image) || req.files.image.length === 0) {
-//           return res.status(StatusCodes.BAD_REQUEST).json({ error: 'No images found in the request' });
-//       }
+  for (const file of req.files.image) {
+    const result = await cloudinary.uploader.upload(file.tempFilePath, {
+      folder: 'product-folder'
+    });
 
-//       const uploadedImages = [];
+    fs.unlinkSync(file.tempFilePath);
+    uploadedImages.push({ src: result.secure_url });
+  }
 
-//       for (const file of req.files.image) {
-//           const result = await cloudinary.uploader.upload(file.tempFilePath, {
-//               use_filename: true,
-//               folder: 'product-folder'
-//           });
-
-//           fs.unlinkSync(file.tempFilePath);
-//           uploadedImages.push({ src: result.secure_url });
-//       }
-
-//       return res.status(StatusCodes.OK).json({ image: uploadedImages });
-//   } catch (error) {
-//       console.error('Error processing images:', error);
-//       return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: 'Failed to process images', details: error.message });
-//   }
-// };
+  return res.status(StatusCodes.OK).json({ image: uploadedImages });
+};
 
 
 
@@ -461,6 +476,89 @@ const updateProdImage = async(req, res)=> {
     return res.status(StatusCodes.OK).json({ image: { src: result.secure_url } });
 }
 
+const deleteProdImage = async (req, res) => {
+  
+  const { productId, imageUrl } = req.body;
+
+  console.log('Received productId:', productId);
+  console.log('Received imageUrl:', imageUrl);
+
+  if (!productId || !imageUrl) {
+      return res.status(StatusCodes.BAD_REQUEST).json({ error: 'Product ID and Image URL are required' });
+  }
+
+  const publicId = imageUrl.match(/\/v\d+\/(.+?)\./)[1];
+  console.log('Public ID:', publicId); 
+
+  const result = await cloudinary.uploader.destroy(publicId);
+  console.log('Cloudinary Delete Response:', result); 
+
+  if (result.result !== 'ok') {
+      return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: 'Failed to delete image from Cloudinary' });
+  }
+
+  const product = await Product.findById(productId);
+  if (!product) {
+      return res.status(StatusCodes.NOT_FOUND).json({ error: 'Product not found' });
+  }
+
+  console.log('Product image array before deletion:', product.image);
+
+  // Find the index of the image object with the matching src property
+  const index = product.image.findIndex(img => img.src === imageUrl);
+  
+  if (index !== -1) {
+      product.image.splice(index, 1);
+      await product.save();
+  }
+
+  return res.status(StatusCodes.OK).json({ message: 'Image deleted successfully' });
+
+};
+
+
+
+// const deleteProdImage = async (req, res) => {
+  
+//   const { productId, imageUrl } = req.body;
+
+//   console.log('Received productId:', productId);
+//   console.log('Received imageUrl:', imageUrl);
+
+//   if (!productId || !imageUrl) {
+//       return res.status(StatusCodes.BAD_REQUEST).json({ error: 'Product ID and Image URL are required' });
+//   }
+
+
+//   const publicId = imageUrl.match(/\/v\d+\/(.+?)\./)[1];
+//   console.log('Public ID:', publicId); 
+
+
+//   const result = await cloudinary.uploader.destroy(publicId);
+//   console.log('Cloudinary Delete Response:', result); 
+
+  
+//   if (result.result !== 'ok') {
+//       return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: 'Failed to delete image from Cloudinary' });
+//   }
+
+
+//   const product = await Product.findById(productId);
+//   if (!product) {
+//       return res.status(StatusCodes.NOT_FOUND).json({ error: 'Product not found' });
+//   }
+
+//   console.log('Product image array before deletion:', product.image);
+
+//   const index = product.image.indexOf(imageUrl);
+//   if (index !== -1) {
+//       product.image.splice(index, 1);
+//       await product.save();
+//   }
+
+//   return res.status(StatusCodes.OK).json({ message: 'Image deleted successfully' });
+
+// };
 
 
 
@@ -522,5 +620,6 @@ module.exports = {
   deleteProduct,
   uploadProdImage,
   updateProdImage,
+  deleteProdImage,
   searchProduct
 }
