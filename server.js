@@ -132,15 +132,13 @@ server.use(morgan(morganFormat));
 //===========
 
 
-
-
 server.use(
     helmet.contentSecurityPolicy({
       directives: {
         defaultSrc: ["'self'"],
-        scriptSrc: ["'self'",  'https://www.google.com', 'https://www.gstatic.com'],
+        scriptSrc: ["'self'", 'https://www.google.com', 'https://www.gstatic.com'],
         styleSrc: ["'self'", "https://fonts.googleapis.com", "'unsafe-inline'"],
-        imgSrc: ["'self'", "https://paucs.store", "https://res.cloudinary.com", "https://ui-avatars.com" , "data:"],
+        imgSrc: ["'self'", "https://paucs.store", "https://res.cloudinary.com", "https://ui-avatars.com", "data:", "blob:"],
         fontSrc: ["'self'", 'https://fonts.googleapis.com', 'https://fonts.gstatic.com'],
         objectSrc: ["'none'" ],
         frameAncestors: ["'self'", "https://paucs.store" ,"https://www.google.com/recaptcha"],
@@ -154,7 +152,8 @@ server.use(
     helmet.hsts({ maxAge: 31536000, includeSubDomains: false }),
     helmet.referrerPolicy({ policy: "no-referrer" }),
     helmet.noSniff(),
-  );
+);
+
 
 
 
