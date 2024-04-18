@@ -444,25 +444,57 @@ const uploadProdImage = async (req, res) => {
 
 
 
-const updateProdImage = async(req, res)=> {
-    const product = await Product.findById(req.params.id);
+// const updateProdImage = async(req, res)=> {
+//     const product = await Product.findById(req.params.id);
 
-    if (!product) {
-      return res.status(404).json({ error: "No product found" });
-    }
+//     if (!product) {
+//       return res.status(404).json({ error: "No product found" });
+//     }
 
-    try {
-        if (product.image) {
-          const publicId = product.image.match(/\/v\d+\/(.+?)\./)[1];
-          await cloudinary.uploader.destroy(publicId);
-        }
-    } catch (error) {
-      console.error("Error deleting existing image from Cloudinary:", error);
-    }
+//     try {
+//         if (product.image) {
+//           const publicId = product.image.match(/\/v\d+\/(.+?)\./)[1];
+//           await cloudinary.uploader.destroy(publicId);
+//         }
+//     } catch (error) {
+//       console.error("Error deleting existing image from Cloudinary:", error);
+//     }
 
-    //validation for image
-    if (!req.files.image.mimetype.startsWith('image')) {
-      throw new CustomError.BadRequestError('Please Upload Image File Type Only');
+//     //validation for image
+//     if (!req.files.image.mimetype.startsWith('image')) {
+//       throw new CustomError.BadRequestError('Please Upload Image File Type Only');
+//     }
+
+//     const result = await cloudinary.uploader.upload(req.files.image.tempFilePath, {
+//       use_filename: true,
+//       folder: 'product-folder'
+//     });
+
+
+//     fs.unlinkSync(req.files.image.tempFilePath);
+
+//     return res.status(StatusCodes.OK).json({ image: { src: result.secure_url } });
+// }
+
+
+
+
+const updateProdImage = async (req, res) => {
+  const productId = req.params.id; // Assuming you pass productId in the request params
+
+  // Fetch the existing product
+  let product = await Product.findById(productId);
+
+  if (!product) {
+    return res.status(StatusCodes.NOT_FOUND).json({ error: 'Product not found' });
+  }
+
+  // Handle single file upload
+  if (!Array.isArray(req.files.image)) {
+    const totalImages = product.image.length + 1; // Calculate total images after adding new one
+
+    if (totalImages > 5) {
+      return res.status(StatusCodes.BAD_REQUEST).json({ error: 'Exceeded the maximum limit of 5 images' });
     }
 
     const result = await cloudinary.uploader.upload(req.files.image.tempFilePath, {
@@ -470,11 +502,42 @@ const updateProdImage = async(req, res)=> {
       folder: 'product-folder'
     });
 
-
     fs.unlinkSync(req.files.image.tempFilePath);
 
-    return res.status(StatusCodes.OK).json({ image: { src: result.secure_url } });
-}
+    // Append new image to existing images
+    product.image.push({ src: result.secure_url });
+    
+    await product.save();
+
+    return res.status(StatusCodes.OK).json({ image: product.image });
+  }
+
+  // Handle multiple file upload
+  const totalImages = product.image.length + req.files.image.length; // Calculate total images after adding new ones
+
+  if (totalImages > 5) {
+    return res.status(StatusCodes.BAD_REQUEST).json({ error: 'Exceeded the maximum limit of 5 images' });
+  }
+
+  const uploadedImages = [];
+  
+  for (const file of req.files.image) {
+    const result = await cloudinary.uploader.upload(file.tempFilePath, {
+      folder: 'product-folder'
+    });
+
+    fs.unlinkSync(file.tempFilePath);
+    
+    // Append new image to existing images
+    product.image.push({ src: result.secure_url });
+  }
+
+  await product.save();
+
+  return res.status(StatusCodes.OK).json({ image: product.image });
+};
+
+
 
 const deleteProdImage = async (req, res) => {
   

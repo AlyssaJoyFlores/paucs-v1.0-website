@@ -35,14 +35,15 @@ const getNotifications = async (req, res) => {
     
    
     const notifications = await Notification.find(queryObject).sort({createdAt: -1})
-    const countUnread = await Notification.countDocuments(queryObject, {status: 'unread'})
+    const countUnread = await Notification.find().where('status')
+    .equals('unread')
 
     
     //const totalnotif = countUnread.length + usercountUnread.length
-    const totalnotif = usercountUnread + countUnread
+    const totalnotif = usercountUnread + countUnread.length
 
 
-    res.status(StatusCodes.OK).json({ notifications, userNotifications, count: countUnread, usercount: usercountUnread, totalnotif});
+    res.status(StatusCodes.OK).json({ notifications, userNotifications, count: countUnread.length, usercount: usercountUnread, totalnotif});
  
 };
 
