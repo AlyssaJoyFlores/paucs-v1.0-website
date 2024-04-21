@@ -232,7 +232,7 @@ const updateSizeChartImage = async(req, res) => {
     });
 
 
-    fs.unlinkSync(req.files.chart_image.tempFilePath);
+    fs.unlinkSync(req.files.image.tempFilePath);
 
     return res.status(StatusCodes.OK).json({ image: { src: result.secure_url } });
 }
