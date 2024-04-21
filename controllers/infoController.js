@@ -114,16 +114,16 @@ const getSizeChart = async(req, res) => {
 
 
 const createSizeChart = async(req, res) => {
-    const {chart_title, chart_image, sizes, chart_categories} = req.body
+    const {chart_title, image, sizes, chart_categories} = req.body
 
     
-    if(!chart_title || !chart_image) {
+    if(!chart_title || !image) {
         throw new CustomError.BadRequestError('All fields are required')
     }
 
     const sizeChart = await SizeChart.create({
         chart_title,
-        chart_image,
+        image,
         chart_categories,
         sizes,
         user: req.user.userId
@@ -162,8 +162,8 @@ const deleteSizeChart = async(req, res) => {
 
    
     try {
-        if (sizeChart.chart_image) {
-            const publicId = sizeChart.chart_image.match(/\/v\d+\/(.+?)\./)[1];
+        if (sizeChart.image) {
+            const publicId = sizeChart.image.match(/\/v\d+\/(.+?)\./)[1];
             await cloudinary.uploader.destroy(publicId);
         }
     } catch (error) {
@@ -179,21 +179,21 @@ const deleteSizeChart = async(req, res) => {
 
 
 const uploadSizeChartImage = async(req, res) => {
-    if (!req.files || !req.files.chart_image) {
+    if (!req.files || !req.files.image) {
         return res.status(200).json({ message: 'size chart without image' });
     }
 
       //validation for image
-    if (!req.files.chart_image.mimetype.startsWith('image')) {
+    if (!req.files.image.mimetype.startsWith('image')) {
     throw new CustomError.BadRequestError('Please Upload Image File Type Only');
     }
 
-    const result = await cloudinary.uploader.upload(req.files.chart_image.tempFilePath, {
+    const result = await cloudinary.uploader.upload(req.files.image.tempFilePath, {
         use_filename:true,
         folder:'chart-image-folder'
     })
 
-    fs.unlinkSync(req.files.chart_image.tempFilePath)
+    fs.unlinkSync(req.files.image.tempFilePath)
 
     return res.status(StatusCodes.OK).json({image:{src:result.secure_url}})
 }
@@ -208,8 +208,8 @@ const updateSizeChartImage = async(req, res) => {
     }
 
     try {
-        if (sizeChart.chart_image) {
-            const publicId = sizeChart.chart_image.match(/\/v\d+\/(.+?)\./)[1];
+        if (sizeChart.image) {
+            const publicId = sizeChart.image.match(/\/v\d+\/(.+?)\./)[1];
             await cloudinary.uploader.destroy(publicId);
         }
     } catch (error) {
@@ -217,16 +217,16 @@ const updateSizeChartImage = async(req, res) => {
     }
 
     //validation for image
-    if (!req.files.chart_image.mimetype.startsWith('image')) {
+    if (!req.files.image.mimetype.startsWith('image')) {
         throw new CustomError.BadRequestError('Please Upload Image File Type Only');
     }
         
 
-    if (!req.files || !req.files.chart_image) {
+    if (!req.files || !req.files.image) {
         return res.status(200).json({ message: 'size chart without image' });
     }
 
-    const result = await cloudinary.uploader.upload(req.files.chart_image.tempFilePath, {
+    const result = await cloudinary.uploader.upload(req.files.image.tempFilePath, {
         use_filename: true,
         folder: 'chart-image-folder'
     });

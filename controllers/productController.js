@@ -401,10 +401,13 @@ const deleteProduct = async(req, res)=> {
 //MULTIPLE IMAGES
 const uploadProdImage = async (req, res) => {
   // Check if req.files.image exists and handle both single and multiple file uploads
-  // if (!req.files || (Array.isArray(req.files.image) && req.files.image.length === 0)) {
-  //   return res.status(StatusCodes.BAD_REQUEST).json({ error: 'No images found in the request' });
-  // }
+  if (!req.files || (Array.isArray(req.files.image) && req.files.image.length === 0)) {
+    return res.status(StatusCodes.BAD_REQUEST).json({ error: 'No images found in the request' });
+  }
 
+  if (!req.files.image.mimetype.startsWith('image')) {
+    throw new CustomError.BadRequestError('Please Upload Image File Type Only');
+  }
 
   // Handle single file upload
   if (!Array.isArray(req.files.image)) {
@@ -424,9 +427,7 @@ const uploadProdImage = async (req, res) => {
 
   const uploadedImages = [];
   
-  //  if (!req.files.image.mimetype.startsWith('image')) {
-  //   throw new CustomError.BadRequestError('Please Upload Image File Type Only');
-  // }
+ 
 
   for (const file of req.files.image) {
     const result = await cloudinary.uploader.upload(file.tempFilePath, {

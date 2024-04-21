@@ -18,7 +18,7 @@ const SizeChartSchema = new mongoose.Schema({
     chart_title: {
         type: String
     },
-    chart_image: {
+    image: {
         type: String
     },
     chart_categories: {
