@@ -50,104 +50,189 @@ const userStatsOrder =  async(req, res)=> {
 }
 
 
+// const addToCart = async (req, res) => {
+//     const { items: cartItems } = req.body;
+
+//     const user = await User.findById(req.user.userId);
+
+//     if (!user) {
+//         throw new CustomError.NotFoundError('user not found');
+//     }
+
+//     if (!cartItems || cartItems.length < 1) {
+//         throw new CustomError.BadRequestError('No cart items provided');
+//     }
+
+//     let orderItems = [];
+//     let subtotal = 0;
+
+//     for (const item of cartItems) {
+//         const dbProduct = await Product.findOne({ _id: item.product });
+//         if (!dbProduct) {
+//             throw new CustomError.NotFoundError(
+//                 `No product with id : ${item.product}`
+//             );
+//         }
+
+//         let { prod_name, prod_department, prod_desc, image, prod_price, _id, prod_benefits} = dbProduct;
+
+//         // Check ctgy_stocks
+//         const category = dbProduct.categories.find(
+//             (ctgy) => ctgy.ctgy_selection === item.ctgy_selection
+//         );
+
+//         if (!category){
+//             throw new CustomError.BadRequestError('Please Select a Size')
+//         }
+
+//         if (category.ctgy_stocks === 0) {
+//             throw new CustomError.BadRequestError(
+//                 `Product '${prod_name}' in category '${item.ctgy_selection}' is out of stock`
+//             );
+//         }
+
+//         if(item.quantity > category.ctgy_stocks){
+//             throw new CustomError.BadRequestError(
+//                 `Cannot add more items `
+//             );
+//         }
+
+
+
+//         let finalPrice;
+   
+//         if (user.freeUnifStatus === 'freeUnif' && prod_benefits === 'freeUnifVoucher' && !item.isVoucherApplied && user.isVoucherUse == false && user.isOrfVerified) {
+//             finalPrice = prod_price * (item.quantity - 1);
+//             user.isVoucherUse = true;
+//             user.save();
+//             item.isVoucherApplied = true;
+//         } else {
+//             finalPrice = prod_price * item.quantity;
+//         }
+
+
+
+//         const singleOrderItem = {
+//             quantity: item.quantity,
+//             prod_name,
+//             prod_department,
+//             prod_desc,
+//             prod_price,
+//             prod_benefits,
+//             isVoucherApplied: item.isVoucherApplied,
+//             image,
+//             product: _id,
+//             ctgy_selection: item.ctgy_selection,
+//         };
+
+      
+
+//         // add item to order
+//         orderItems = [...orderItems, singleOrderItem];
+
+//         // calculate subtotal
+//         // subtotal += item.quantity * prod_price;
+//         subtotal += finalPrice
+//     }
+
+//     const total = subtotal;
+
+//     const order = await Order.create({
+//         orderItems,
+//         total,
+//         subtotal,
+//         user: req.user.userId,
+//     });
+
+//     res.status(StatusCodes.CREATED).json({ msg: 'Create Order', order });
+// };
+
+
+
+
 const addToCart = async (req, res) => {
     const { items: cartItems } = req.body;
 
     const user = await User.findById(req.user.userId);
 
     if (!user) {
-        throw new CustomError.NotFoundError('user not found');
+        throw new CustomError.NotFoundError('User not found');
     }
 
-    if (!cartItems || cartItems.length < 1) {
+    if (!cartItems || cartItems.length === 0) {
         throw new CustomError.BadRequestError('No cart items provided');
     }
 
-    let orderItems = [];
-    let subtotal = 0;
-
-    for (const item of cartItems) {
+    const promises = cartItems.map(async (item) => {
         const dbProduct = await Product.findOne({ _id: item.product });
         if (!dbProduct) {
-            throw new CustomError.NotFoundError(
-                `No product with id : ${item.product}`
-            );
+            throw new CustomError.NotFoundError(`No product with id: ${item.product}`);
         }
 
-        let { prod_name, prod_department, prod_desc, image, prod_price, _id, prod_benefits} = dbProduct;
-
-        // Check ctgy_stocks
-        const category = dbProduct.categories.find(
-            (ctgy) => ctgy.ctgy_selection === item.ctgy_selection
-        );
-
-        if (!category){
-            throw new CustomError.BadRequestError('Please Select a Size')
+        const category = dbProduct.categories.find((ctgy) => ctgy.ctgy_selection === item.ctgy_selection);
+        if (!category) {
+            throw new CustomError.BadRequestError(`Invalid category selection '${item.ctgy_selection}' for product '${dbProduct.prod_name}'`);
         }
 
         if (category.ctgy_stocks === 0) {
-            throw new CustomError.BadRequestError(
-                `Product '${prod_name}' in category '${item.ctgy_selection}' is out of stock`
-            );
+            throw new CustomError.BadRequestError(`Product '${dbProduct.prod_name}' in category '${item.ctgy_selection}' is out of stock`);
         }
 
-        if(item.quantity > category.ctgy_stocks){
-            throw new CustomError.BadRequestError(
-                `Cannot add more items `
-            );
+        if (item.quantity > category.ctgy_stocks) {
+            throw new CustomError.BadRequestError(`Cannot add more items of '${dbProduct.prod_name}' in category '${item.ctgy_selection}'`);
         }
 
+        // Check if there is an existing cart for the specific category of the product
+        let userCart = await Order.findOne({
+            user: req.user.userId,
+            status: 'add to cart',
+            'orderItems.product': item.product,
+            'orderItems.ctgy_selection': item.ctgy_selection
+        });
 
-
-        let finalPrice;
-   
-        if (user.freeUnifStatus === 'freeUnif' && prod_benefits === 'freeUnifVoucher' && !item.isVoucherApplied && user.isVoucherUse == false && user.isOrfVerified) {
-            finalPrice = prod_price * (item.quantity - 1);
-            user.isVoucherUse = true;
-            user.save();
-            item.isVoucherApplied = true;
+        if (userCart) {
+            // If exists, update the quantity
+            const existingItem = userCart.orderItems.find(
+                (oi) => oi.product.toString() === item.product && oi.ctgy_selection === item.ctgy_selection
+            );
+            existingItem.quantity += item.quantity;
+            userCart.subtotal += dbProduct.prod_price * item.quantity;
         } else {
-            finalPrice = prod_price * item.quantity;
+            // Otherwise, create a new order for this product category
+            userCart = new Order({
+                status: 'add to cart',
+                user: req.user.userId,
+                orderItems: [{
+                    quantity: item.quantity,
+                    prod_name: dbProduct.prod_name,
+                    prod_department: dbProduct.prod_department,
+                    prod_desc: dbProduct.prod_desc,
+                    prod_price: dbProduct.prod_price,
+                    prod_benefits: dbProduct.prod_benefits,
+                    image: dbProduct.image,
+                    product: dbProduct._id,
+                    ctgy_selection: item.ctgy_selection,
+                    isVoucherApplied: false // assuming default value
+                }],
+                subtotal: dbProduct.prod_price * item.quantity
+            });
         }
 
+        // Calculate total based on subtotal (if subtotal exists)
+        if (userCart.subtotal) {
+            userCart.total = userCart.subtotal; // Placeholder for more complex total calculation
+        }
 
+        await userCart.save();
 
-        const singleOrderItem = {
-            quantity: item.quantity,
-            prod_name,
-            prod_department,
-            prod_desc,
-            prod_price,
-            prod_benefits,
-            isVoucherApplied: item.isVoucherApplied,
-            image,
-            product: _id,
-            ctgy_selection: item.ctgy_selection,
-        };
-
-      
-
-        // add item to order
-        orderItems = [...orderItems, singleOrderItem];
-
-        // calculate subtotal
-        // subtotal += item.quantity * prod_price;
-        subtotal += finalPrice
-    }
-
-    const total = subtotal;
-
-    const order = await Order.create({
-        orderItems,
-        total,
-        subtotal,
-        user: req.user.userId,
+        return userCart;
     });
 
-    res.status(StatusCodes.CREATED).json({ msg: 'Create Order', order });
+    // Execute all promises concurrently
+    const userCarts = await Promise.all(promises);
+
+    res.status(StatusCodes.CREATED).json({ msg: 'Create Order', cartItems: userCarts, count: userCarts.length });
 };
-
-
 
 
 const updateQuantity = async (req, res) => {
